@@ -51,6 +51,7 @@ class TpchSuite(
     println("Failed queries:")
     println("")
     printResults(results.filter(!_.testPassed))
+    println("")
     if (passedCount != count) {
       return false
     }
