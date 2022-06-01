@@ -63,7 +63,6 @@ public class Tpch implements Callable<Integer> {
       case 2:
         level = Level.WARN;
         break;
-
       default:
         throw new IllegalArgumentException("Log level not found: " + logLevel);
     }

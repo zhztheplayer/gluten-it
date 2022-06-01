@@ -43,8 +43,21 @@ class TpchSuite(
     val count = results.count(_ => true)
     println("")
     println("Test report:")
+    println("")
     printf("Summary: %d out of %d queries passed. \n", passedCount, count)
     println("")
+    printResults(results.filter(_.testPassed))
+    println("")
+    println("Failed queries:")
+    println("")
+    printResults(results.filter(!_.testPassed))
+    if (passedCount != count) {
+      return false
+    }
+    true
+  }
+
+  private def printResults(results: List[TestResultLine]) = {
     printf("|%15s|%15s|%30s|%30s|\n", "Query ID", "Was Passed", "Expected Row Count",
       "Actual Row Count")
     results.foreach { line =>
@@ -52,10 +65,6 @@ class TpchSuite(
         line.expectedRowCount.getOrElse("N/A"),
         line.actualRowCount.getOrElse("N/A"))
     }
-    if (passedCount != count) {
-      return false
-    }
-    true
   }
 
   private def runTpchQuery(id: String): TestResultLine = {
