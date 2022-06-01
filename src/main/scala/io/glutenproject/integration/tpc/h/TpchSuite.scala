@@ -45,8 +45,9 @@ class TpchSuite(
     printf("|%15s|%15s|%30s|%30s|\n", "Query ID", "Was Passed", "Expected Row Count",
       "Actual Row Count")
     results.foreach { line =>
-      printf("|%15s|%15s|%30s|%30s|\n", line.queryId, line.testPassed, line.expectedRowCount,
-        line.actualRowCount)
+      printf("|%15s|%15s|%30s|%30s|\n", line.queryId, line.testPassed,
+        line.expectedRowCount.getOrElse("N/A"),
+        line.actualRowCount.getOrElse("N/A"))
     }
   }
 
