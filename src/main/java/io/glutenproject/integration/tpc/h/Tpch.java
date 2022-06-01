@@ -19,8 +19,8 @@ public class Tpch implements Callable<Integer> {
   @CommandLine.Option(names = {"-s", "--scale"}, description = "The scale factor of sample TPC-H dataset", defaultValue = "0.1")
   private double scale;
 
-  @CommandLine.Option(names = {"--fix-width-as-double"}, description = "Generate integer/long/date as double", defaultValue = "false")
-  private boolean fixWidthAsDouble;
+  @CommandLine.Option(names = {"--fixed-width-as-double"}, description = "Generate integer/long/date as double", defaultValue = "false")
+  private boolean fixedWidthAsDouble;
 
   @CommandLine.Option(names = {"--queries"}, description = "Set a comma-seperated list of query IDs to run", split = ",", defaultValue = "q1,q2,q3,q4,q5,q6,q7,q8,q9,q10,q11,q12,q13,q14,q15,q16,q17,q18,q19,q20,q21,q22")
   private String[] queries;
@@ -44,7 +44,7 @@ public class Tpch implements Callable<Integer> {
     }
     final List<TypeModifier> typeModifiers = new ArrayList<>();
     final String queryResource;
-    if (fixWidthAsDouble) {
+    if (fixedWidthAsDouble) {
       typeModifiers.add(package$.MODULE$.TYPE_MODIFIER_INTEGER_AS_DOUBLE());
       typeModifiers.add(package$.MODULE$.TYPE_MODIFIER_LONG_AS_DOUBLE());
       typeModifiers.add(package$.MODULE$.TYPE_MODIFIER_DATE_AS_DOUBLE());
@@ -69,7 +69,9 @@ public class Tpch implements Callable<Integer> {
     }
     final TpchSuite suite = new TpchSuite(testConf, baselineConf, scale,
         typeModifiers, queryResource, queries, level);
-    suite.run();
+    if (!suite.run()) {
+      return -1;
+    }
     return 0;
   }
 

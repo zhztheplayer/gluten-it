@@ -31,7 +31,7 @@ class TpchSuite(
   private val dataGen = new TpchDataGen(sessionSwitcher.spark(), scale, TpchSuite.TPCH_WRITE_PATH,
     typeModifiers.asScala.toArray)
 
-  def run(): Unit = {
+  def run(): Boolean = {
     dataGen.gen()
     val results = queryIds.map { queryId =>
       if (!ALL_QUERY_IDS.contains(queryId)) {
@@ -39,8 +39,11 @@ class TpchSuite(
       }
       runTpchQuery(queryId)
     }.toList
+    val passedCount = results.count(l => l.testPassed)
+    val count = results.count(_ => true)
     println("")
     println("Test report:")
+    printf("Summary: %d out of %d queries passed. \n", passedCount, count)
     println("")
     printf("|%15s|%15s|%30s|%30s|\n", "Query ID", "Was Passed", "Expected Row Count",
       "Actual Row Count")
@@ -49,6 +52,10 @@ class TpchSuite(
         line.expectedRowCount.getOrElse("N/A"),
         line.actualRowCount.getOrElse("N/A"))
     }
+    if (passedCount != count) {
+      return false
+    }
+    true
   }
 
   private def runTpchQuery(id: String): TestResultLine = {
