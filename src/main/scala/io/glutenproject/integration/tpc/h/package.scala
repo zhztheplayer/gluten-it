@@ -34,6 +34,7 @@ package object h {
       .set("spark.storage.blockManagerSlaveTimeoutMs", "3600000")
       .set("spark.executor.heartbeatInterval", "3600000")
       .set("spark.network.timeout", "3601s")
+      .set("spark.sql.broadcastTimeout", "1800")
       .set("spark.unsafe.exceptionOnMemoryLeak", "false")
       .set("spark.network.io.preferDirectBufs", "false")
 
@@ -49,6 +50,7 @@ package object h {
       .set("spark.storage.blockManagerSlaveTimeoutMs", "3600000")
       .set("spark.executor.heartbeatInterval", "3600000")
       .set("spark.network.timeout", "3601s")
+      .set("spark.sql.broadcastTimeout", "1800")
       .set("spark.unsafe.exceptionOnMemoryLeak", "false")
       .set("spark.network.io.preferDirectBufs", "false")
 
@@ -64,6 +66,7 @@ package object h {
       .set("spark.storage.blockManagerSlaveTimeoutMs", "3600000")
       .set("spark.executor.heartbeatInterval", "3600000")
       .set("spark.network.timeout", "3601s")
+      .set("spark.sql.broadcastTimeout", "1800")
       .set("spark.unsafe.exceptionOnMemoryLeak", "false")
       .set("spark.network.io.preferDirectBufs", "false")
 
