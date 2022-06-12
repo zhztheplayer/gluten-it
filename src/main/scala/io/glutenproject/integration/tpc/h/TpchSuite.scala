@@ -32,6 +32,7 @@ class TpchSuite(
     typeModifiers.asScala.toArray)
 
   def run(): Boolean = {
+    LogManager.getRootLogger.setLevel(logLevel)
     dataGen.gen()
     val results = queryIds.map { queryId =>
       if (!ALL_QUERY_IDS.contains(queryId)) {
