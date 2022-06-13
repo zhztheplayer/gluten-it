@@ -28,6 +28,9 @@ public class Tpch implements Callable<Integer> {
   @CommandLine.Option(names = {"--log-level"}, description = "Set log level: 0 for DEBUG, 1 for INFO, 2 for WARN", defaultValue = "2")
   private int logLevel;
 
+  @CommandLine.Option(names = {"--explain"}, description = "Output explain result for queries", defaultValue = "false")
+  private boolean explain;
+
   @Override
   public Integer call() throws Exception {
     final SparkConf baselineConf = io.glutenproject.integration.tpc.h.package$.MODULE$.VANILLA_CONF();
@@ -67,7 +70,7 @@ public class Tpch implements Callable<Integer> {
         throw new IllegalArgumentException("Log level not found: " + logLevel);
     }
     final TpchSuite suite = new TpchSuite(testConf, baselineConf, scale,
-        typeModifiers, queryResource, queries, level);
+        typeModifiers, queryResource, queries, level, explain);
     if (!suite.run()) {
       return -1;
     }

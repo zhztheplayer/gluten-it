@@ -16,7 +16,8 @@ class TpchSuite(
     val typeModifiers: java.util.List[TypeModifier],
     val queryResource: String,
     val queryIds: Array[String],
-    val logLevel: Level) {
+    val logLevel: Level,
+    val explain: Boolean) {
 
   System.setProperty("spark.testing", "true")
   LogManager.getRootLogger.setLevel(logLevel)
@@ -49,7 +50,7 @@ class TpchSuite(
     println("")
     printResults(results.filter(_.testPassed))
     println("")
-    println("Failed queries:")
+    println("Failed queries (a failed query with correct row count indicates value mismatches): ")
     println("")
     printResults(results.filter(!_.testPassed))
     println("")
@@ -74,20 +75,25 @@ class TpchSuite(
     try {
       sessionSwitcher.useSession("baseline")
       runner.createTables(sessionSwitcher.spark())
-      val expected = runner.runTpcQuery(sessionSwitcher.spark(), id, explain = true)
+      val expected = runner.runTpcQuery(sessionSwitcher.spark(), id, explain = explain)
       sessionSwitcher.useSession("test")
       runner.createTables(sessionSwitcher.spark())
-      val result = runner.runTpcQuery(sessionSwitcher.spark(), id, explain = true)
+      val result = runner.runTpcQuery(sessionSwitcher.spark(), id, explain = explain)
       val error = GlutenTestUtils.compareAnswers(result, expected, sort = true)
       if (error.isEmpty) {
         println(s"Successfully ran query $id, result check was passed. " +
             s"Returned row count: ${result.length}, expected: ${expected.length}")
         return TestResultLine(id, testPassed = true, Some(expected.length), Some(result.length), None)
       }
+      println(s"Error running query $id, result check was not passed. " +
+          s"Returned row count: ${result.length}, expected: ${expected.length}, error: ${error.get}")
       TestResultLine(id, testPassed = false, Some(expected.length), Some(result.length), error)
     } catch {
       case e: Exception =>
-        TestResultLine(id, testPassed = false, None, None, Some(s"FATAL: ${ExceptionUtils.getStackTrace(e)}"))
+        val error = Some(s"FATAL: ${ExceptionUtils.getStackTrace(e)}")
+        println(s"Error running query $id. " +
+            s" Error: ${error.get}")
+        TestResultLine(id, testPassed = false, None, None, error)
     }
   }
 }
