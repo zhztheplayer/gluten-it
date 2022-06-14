@@ -26,7 +26,9 @@ import org.apache.spark.sql.{Row, SaveMode, SparkSession}
 import java.io.File
 import java.sql.Date
 
-class TpchDataGen(val spark: SparkSession, scale: Double, path: String,
+import scala.collection.JavaConverters._
+
+class TpchDataGen(val spark: SparkSession, scale: Double, partitions: Int, path: String,
     typeModifiers: Array[TypeModifier] = Array())
     extends Serializable with TableGen {
 
@@ -40,19 +42,19 @@ class TpchDataGen(val spark: SparkSession, scale: Double, path: String,
   }
 
   override def gen(): Unit = {
-    generate(path, "lineitem", lineItemSchema, lineItemGenerator, lineItemParser)
-    generate(path, "customer", customerSchema, customerGenerator, customerParser)
-    generate(path, "orders", orderSchema, orderGenerator, orderParser)
-    generate(path, "partsupp", partSupplierSchema, partSupplierGenerator, partSupplierParser)
-    generate(path, "supplier", supplierSchema, supplierGenerator, supplierParser)
+    generate(path, "lineitem", lineItemSchema, partitions, lineItemGenerator, lineItemParser)
+    generate(path, "customer", customerSchema, partitions, customerGenerator, customerParser)
+    generate(path, "orders", orderSchema, partitions, orderGenerator, orderParser)
+    generate(path, "partsupp", partSupplierSchema, partitions, partSupplierGenerator, partSupplierParser)
+    generate(path, "supplier", supplierSchema, partitions, supplierGenerator, supplierParser)
     generate(path, "nation", nationSchema, nationGenerator, nationParser)
-    generate(path, "part", partSchema, partGenerator, partParser)
+    generate(path, "part", partSchema, partitions, partGenerator, partParser)
     generate(path, "region", regionSchema, regionGenerator, regionParser)
   }
 
   // lineitem
-  private def lineItemGenerator = { () =>
-    new LineItemGenerator(scale, 1, 1)
+  private def lineItemGenerator = { (part: Int, partCount: Int) =>
+    new LineItemGenerator(scale, part, partCount)
   }
 
   private def lineItemSchema = {
@@ -98,8 +100,8 @@ class TpchDataGen(val spark: SparkSession, scale: Double, path: String,
       )
 
   // customer
-  private def customerGenerator = { () =>
-    new CustomerGenerator(scale, 1, 1)
+  private def customerGenerator = { (part: Int, partCount: Int) =>
+    new CustomerGenerator(scale, part, partCount)
   }
 
   private def customerSchema = {
@@ -129,8 +131,8 @@ class TpchDataGen(val spark: SparkSession, scale: Double, path: String,
       )
 
   // orders
-  private def orderGenerator = { () =>
-    new OrderGenerator(scale, 1, 1)
+  private def orderGenerator = { (part: Int, partCount: Int) =>
+    new OrderGenerator(scale, part, partCount)
   }
 
   private def orderSchema = {
@@ -162,8 +164,8 @@ class TpchDataGen(val spark: SparkSession, scale: Double, path: String,
       )
 
   // partsupp
-  private def partSupplierGenerator = { () =>
-    new PartSupplierGenerator(scale, 1, 1)
+  private def partSupplierGenerator = { (part: Int, partCount: Int) =>
+    new PartSupplierGenerator(scale, part, partCount)
   }
 
   private def partSupplierSchema = {
@@ -187,8 +189,8 @@ class TpchDataGen(val spark: SparkSession, scale: Double, path: String,
       )
 
   // supplier
-  private def supplierGenerator = { () =>
-    new SupplierGenerator(scale, 1, 1)
+  private def supplierGenerator = { (part: Int, partCount: Int) =>
+    new SupplierGenerator(scale, part, partCount)
   }
 
   private def supplierSchema = {
@@ -239,8 +241,8 @@ class TpchDataGen(val spark: SparkSession, scale: Double, path: String,
       )
 
   // part
-  private def partGenerator = { () =>
-    new PartGenerator(scale, 1, 1)
+  private def partGenerator = { (part: Int, partCount: Int) =>
+    new PartGenerator(scale, part, partCount)
   }
 
   private def partSchema = {
@@ -296,6 +298,16 @@ class TpchDataGen(val spark: SparkSession, scale: Double, path: String,
   private def generate[U](dir: String, tableName: String, schema: StructType,
       gen: () => java.lang.Iterable[U],
       parser: U => Row): Unit = {
+    generate(dir, tableName, schema, 1, (_: Int, _: Int) => {
+      gen.apply()
+    }, parser)
+  }
+
+  private def generate[U](dir: String, tableName: String, schema: StructType,
+      partitions: Int,
+      gen: (Int, Int) => java.lang.Iterable[U],
+      parser: U => Row): Unit = {
+    println(s"Generating table $tableName...")
     val modifiers = new java.util.ArrayList[TypeModifier]()
     schema.fields.foreach { f =>
       if (typeMapping.containsKey(f.dataType)) {
@@ -311,12 +323,15 @@ class TpchDataGen(val spark: SparkSession, scale: Double, path: String,
         StructField(f.name, modifier.to, f.nullable, f.metadata)
       })
 
-    spark.range(0, rowCountOf(gen.apply()), 1L, 1)
+    spark.range(0, partitions, 1L, partitions)
         .mapPartitions { itr =>
-          val lineItem = gen.apply()
-          val lineItemItr = lineItem.iterator()
-          val rows = itr.map { _ =>
-            val item = lineItemItr.next()
+          val id = itr.toArray
+          if (id.length != 1) {
+            throw new IllegalStateException()
+          }
+          val data = gen.apply(id(0).toInt + 1, partitions)
+          val dataItr = data.iterator()
+          val rows = dataItr.asScala.map { item =>
             val row = parser(item)
             val modifiedRow = Row(row.toSeq.zipWithIndex.map { case (v, i) =>
               val modifier = modifiers.get(i)
@@ -328,17 +343,7 @@ class TpchDataGen(val spark: SparkSession, scale: Double, path: String,
         }(RowEncoder(modifiedSchema))
         .write
         .mode(SaveMode.Overwrite)
-        .parquet(path + File.separator + tableName)
-  }
-
-  private def rowCountOf[U](itr: java.lang.Iterable[U]): Long = {
-    var cnt = 0L
-    val iterator = itr.iterator
-    while (iterator.hasNext) {
-      iterator.next()
-      cnt = cnt + 1
-    }
-    cnt
+        .parquet(dir + File.separator + tableName)
   }
 }
 

@@ -22,10 +22,9 @@ import org.apache.spark.sql.GlutenSparkSessionSwitcher.NONE
 import org.apache.spark.sql.catalyst.expressions.CodegenObjectFactoryMode
 import org.apache.spark.sql.catalyst.optimizer.ConvertToLocalRelation
 import org.apache.spark.sql.internal.{SQLConf, StaticSQLConf}
-import org.apache.spark.sql.test.TestSparkSession
-import org.apache.spark.{DebugFilesystem, SparkConf}
+import org.apache.spark.{DebugFilesystem, SparkConf, SparkContext}
 
-class GlutenSparkSessionSwitcher() {
+class GlutenSparkSessionSwitcher(val cpus: Int) extends AutoCloseable {
   private val sessionMap: java.util.Map[SessionToken, SparkConf] =
     new java.util.HashMap[SessionToken, SparkConf]
 
@@ -44,11 +43,15 @@ class GlutenSparkSessionSwitcher() {
     StaticSQLConf.WAREHOUSE_PATH,
     testDefaults.get(StaticSQLConf.WAREHOUSE_PATH) + "/" + getClass.getCanonicalName)
 
-  private var _spark: TestSparkSession = null
-  private var _activeSession: SessionToken = GlutenSparkSessionSwitcher.NONE
+  private var _spark: SparkSession = _
+  private var _activeSessionDesc: SessionDesc = GlutenSparkSessionSwitcher.NONE
+
+  def defaultConf(): SparkConf = {
+    testDefaults
+  }
 
   def registerSession(name: String, conf: SparkConf): SessionToken = synchronized {
-    val token = new SessionToken(name)
+    val token = SessionToken(name)
     if (sessionMap.containsKey(token)) {
       throw new IllegalArgumentException(s"Session name already registered: $name")
     }
@@ -56,36 +59,42 @@ class GlutenSparkSessionSwitcher() {
     return token
   }
 
-  def useSession(token: String): Unit = synchronized {
-    useSession(new SessionToken(token))
+  def useSession(token: String, appName: String = "gluten-app"): Unit = synchronized {
+    useSession(SessionDesc(SessionToken(token), appName))
   }
 
-  def useSession(token: SessionToken): Unit = synchronized {
-    if (token == _activeSession) {
+  def useSession(desc: SessionDesc): Unit = synchronized {
+    if (desc == _activeSessionDesc) {
       return
     }
-    if (!sessionMap.containsKey(token)) {
-      throw new IllegalArgumentException(s"Session name doesn't exist: ${token.name}")
+    if (!sessionMap.containsKey(desc.sessionToken)) {
+      throw new IllegalArgumentException(s"Session doesn't exist: $desc")
     }
-    println(s"Switching to ${token.name} session... ")
+    println(s"Switching to ${desc} session... ")
     stopActiveSession()
     val conf = new SparkConf()
         .setAll(testDefaults.getAll)
-        .setAll(sessionMap.get(token).getAll)
-    activateSession(conf)
-    _activeSession = token
-    println(s"Successfully switched to ${token.name} session. ")
+        .setAll(sessionMap.get(desc.sessionToken).getAll)
+    activateSession(conf, desc.appName)
+    _activeSessionDesc = desc
+    println(s"Successfully switched to $desc session. ")
   }
 
-  private def activateSession(conf: SparkConf): Unit = {
+  def spark(): SparkSession = {
+    _spark
+  }
+
+  private def activateSession(conf: SparkConf, appName: String): Unit = {
     SparkSession.cleanupAnyExistingSession()
     if (hasActiveSession()) {
       stopActiveSession()
     }
-    createSession(conf)
+    createSession(conf, appName = appName)
+    SparkSession.setDefaultSession(_spark)
+    SparkSession.setActiveSession(_spark)
   }
 
-  def stopActiveSession(): Unit = synchronized {
+  private def stopActiveSession(): Unit = synchronized {
     try {
       if (_spark != null) {
         try {
@@ -93,7 +102,7 @@ class GlutenSparkSessionSwitcher() {
         } finally {
           _spark.stop()
           _spark = null
-          _activeSession = NONE
+          _activeSessionDesc = NONE
         }
       }
     } finally {
@@ -102,39 +111,26 @@ class GlutenSparkSessionSwitcher() {
     }
   }
 
-  private def createSession(conf: SparkConf): Unit = {
+  private def createSession(conf: SparkConf, appName: String): Unit = {
     if (hasActiveSession()) {
       throw new IllegalStateException()
     }
-    _spark = new TestSparkSession(conf)
+    _spark = new SparkSession(new SparkContext(s"local[$cpus]", appName, conf))
   }
 
   private def hasActiveSession(): Boolean = {
     _spark != null
   }
 
-  def spark(): SparkSession = {
-    _spark
+  override def close(): Unit = {
+    stopActiveSession()
   }
 }
 
-class SessionToken(val name: String) {
+case class SessionToken(name: String)
 
-  override def equals(other: Any): Boolean = other match {
-    case that: SessionToken =>
-      (that canEqual this) &&
-          name == that.name
-    case _ => false
-  }
-
-  def canEqual(other: Any): Boolean = other.isInstanceOf[SessionToken]
-
-  override def hashCode(): Int = {
-    val state = Seq(name)
-    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
-  }
-}
+case class SessionDesc(sessionToken: SessionToken, appName: String)
 
 object GlutenSparkSessionSwitcher {
-  val NONE: SessionToken = new SessionToken("none")
+  val NONE: SessionDesc = SessionDesc(SessionToken("none"), "none")
 }

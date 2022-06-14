@@ -30,7 +30,8 @@ class TpcRunner(val queryResourceFolder: String, val dataPath: String) {
     TpcRunner.createTables(spark, dataPath)
   }
 
-  def runTpcQuery(spark: SparkSession, caseId: String, explain: Boolean = false): Seq[Row] = {
+  def runTpcQuery(spark: SparkSession, caseId: String, explain: Boolean = false, desc: String): Seq[Row] = {
+    spark.sparkContext.setJobDescription(desc)
     val path = "%s/%s.sql".format(queryResourceFolder, caseId);
     val sql = TpcRunner.resourceToString(path)
     val df = spark.sql(sql)

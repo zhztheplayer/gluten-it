@@ -10,6 +10,7 @@ import java.util.concurrent.Callable;
 
 
 @CommandLine.Command(name = "gluten-tpch", mixinStandardHelpOptions = true,
+    showDefaultValues = true,
     description = "Gluten integration test using TPC-H benchmark's data and queries")
 public class Tpch implements Callable<Integer> {
 
@@ -30,6 +31,24 @@ public class Tpch implements Callable<Integer> {
 
   @CommandLine.Option(names = {"--explain"}, description = "Output explain result for queries", defaultValue = "false")
   private boolean explain;
+
+  @CommandLine.Option(names = {"--error-on-memleak"}, description = "Fail the test when memory leak is detected by Spark's memory manager", defaultValue = "false")
+  private boolean errorOnMemLeak;
+
+  @CommandLine.Option(names = {"--enable-history"}, description = "Start a Spark history server during running", defaultValue = "false")
+  private boolean enableHsUi;
+
+  @CommandLine.Option(names = {"--history-ui-port"}, description = "Port that Spark history server UI binds to", defaultValue = "18080")
+  private int hsUiPort;
+
+  @CommandLine.Option(names = {"--cpus"}, description = "Executor cpu number", defaultValue = "2")
+  private int cpus;
+
+  @CommandLine.Option(names = {"--off-heap-size"}, description = "Off heap memory size per executor", defaultValue = "6g")
+  private String offHeapSize;
+
+  @CommandLine.Option(names = {"--iterations"}, description = "How many iterations to run", defaultValue = "1")
+  private int iterations;
 
   @Override
   public Integer call() throws Exception {
@@ -70,8 +89,10 @@ public class Tpch implements Callable<Integer> {
         throw new IllegalArgumentException("Log level not found: " + logLevel);
     }
     final TpchSuite suite = new TpchSuite(testConf, baselineConf, scale,
-        typeModifiers, queryResource, queries, level, explain);
-    if (!suite.run()) {
+        typeModifiers, queryResource, queries, level, explain, errorOnMemLeak,
+        enableHsUi, hsUiPort, cpus, offHeapSize, iterations);
+    boolean succeed = suite.run();
+    if (!succeed) {
       return -1;
     }
     return 0;
