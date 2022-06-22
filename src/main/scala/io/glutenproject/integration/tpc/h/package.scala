@@ -37,7 +37,7 @@ package object h {
 
   val VELOX_BACKEND_CONF: SparkConf = new SparkConf()
       .set("spark.memory.offHeap.enabled", "true")
-      .set("spark.sql.parquet.enableVectorizedReader", "false")
+      .set("spark.sql.parquet.enableVectorizedReader", "true")
       .set("spark.plugins", "io.glutenproject.GlutenPlugin")
       .set("spark.gluten.sql.columnar.backend.lib", "velox")
       .set("spark.shuffle.manager", "org.apache.spark.shuffle.sort.ColumnarShuffleManager")
@@ -52,7 +52,7 @@ package object h {
 
   val GAZELLE_CPP_BACKEND_CONF: SparkConf = new SparkConf()
       .set("spark.memory.offHeap.enabled", "true")
-      .set("spark.sql.parquet.enableVectorizedReader", "false")
+      .set("spark.sql.parquet.enableVectorizedReader", "true")
       .set("spark.plugins", "io.glutenproject.GlutenPlugin")
       .set("spark.gluten.sql.columnar.backend.lib", "gazelle_cpp")
       .set("spark.shuffle.manager", "org.apache.spark.shuffle.sort.ColumnarShuffleManager")
