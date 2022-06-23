@@ -96,10 +96,15 @@ class TpchSuite(
     println("")
     printResults(results.filter(_.testPassed))
     println("")
-    println("Failed queries (a failed query with correct row count indicates value mismatches): ")
-    println("")
-    printResults(results.filter(!_.testPassed))
-    println("")
+
+    if (passedCount == count) {
+      println("No failed queries. ")
+    } else {
+      println("Failed queries (a failed query with correct row count indicates value mismatches): ")
+      println("")
+      printResults(results.filter(!_.testPassed))
+      println("")
+    }
 
     // wait for input, if history server was started
     if (enableHsUi) {
