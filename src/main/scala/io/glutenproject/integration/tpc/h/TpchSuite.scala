@@ -1,5 +1,6 @@
 package io.glutenproject.integration.tpc.h
 
+import io.glutenproject.integration.stat.RamStat
 import io.glutenproject.integration.tpc.TpcRunner
 import io.glutenproject.integration.tpc.h.TpchSuite.{ALL_QUERY_IDS, TestResultLine}
 import org.apache.commons.lang3.exception.ExceptionUtils
@@ -89,6 +90,14 @@ class TpchSuite(
     sessionSwitcher.close()
     val passedCount = results.count(l => l.testPassed)
     val count = results.count(_ => true)
+
+    // RAM stats
+    println("Performing GC to collect RAM statistics... ")
+    System.gc()
+    System.gc()
+    printf("RAM statistics: JVM Heap size: %d KiB (total %d KiB), Process RSS: %d KiB\n",
+      RamStat.getJvmHeapUsed(), RamStat.getJvmHeapTotal(), RamStat.getProcessRamUsed())
+
     println("")
     println("Test report:")
     println("")
