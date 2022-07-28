@@ -133,12 +133,13 @@ class TpchSuite(
   }
 
   private def printResults(results: List[TestResultLine]) = {
-    printf("|%15s|%15s|%30s|%30s|\n", "Query ID", "Was Passed", "Expected Row Count",
-      "Actual Row Count")
+    printf("|%15s|%15s|%30s|%30s|%30s|\n", "Query ID", "Was Passed", "Expected Row Count",
+      "Actual Row Count", "Actual Elapse Time")
     results.foreach { line =>
-      printf("|%15s|%15s|%30s|%30s|\n", line.queryId, line.testPassed,
+      printf("|%15s|%15s|%30s|%30s|%30s|\n", line.queryId, line.testPassed,
         line.expectedRowCount.getOrElse("N/A"),
-        line.actualRowCount.getOrElse("N/A"))
+        line.actualRowCount.getOrElse("N/A"),
+        line.actualElapseTime)
     }
   }
 
@@ -153,23 +154,25 @@ class TpchSuite(
       val testDesc = "Gluten Spark TPC-H %s".format(id)
       sessionSwitcher.useSession("test", testDesc)
       runner.createTables(sessionSwitcher.spark())
+      val startTime = System.currentTimeMillis()
       val result = runner.runTpcQuery(sessionSwitcher.spark(), id, explain = explain,
         testDesc)
+      val elapseTime = System.currentTimeMillis() - startTime
       val error = GlutenTestUtils.compareAnswers(result, expected, sort = true)
       if (error.isEmpty) {
         println(s"Successfully ran query $id, result check was passed. " +
             s"Returned row count: ${result.length}, expected: ${expected.length}")
-        return TestResultLine(id, testPassed = true, Some(expected.length), Some(result.length), None)
+        return TestResultLine(id, testPassed = true, Some(expected.length), Some(result.length), elapseTime, None)
       }
       println(s"Error running query $id, result check was not passed. " +
           s"Returned row count: ${result.length}, expected: ${expected.length}, error: ${error.get}")
-      TestResultLine(id, testPassed = false, Some(expected.length), Some(result.length), error)
+      TestResultLine(id, testPassed = false, Some(expected.length), Some(result.length), elapseTime, error)
     } catch {
       case e: Exception =>
         val error = Some(s"FATAL: ${ExceptionUtils.getStackTrace(e)}")
         println(s"Error running query $id. " +
             s" Error: ${error.get}")
-        TestResultLine(id, testPassed = false, None, None, error)
+        TestResultLine(id, testPassed = false, None, None, -1L, error)
     }
   }
 }
@@ -186,5 +189,6 @@ object TpchSuite {
       testPassed: Boolean,
       expectedRowCount: Option[Long],
       actualRowCount: Option[Long],
+      actualElapseTime: Long,
       errorMessage: Option[String])
 }
