@@ -29,13 +29,19 @@ java -Xmx5G -cp target/gluten-it-1.0-SNAPSHOT-jar-with-dependencies.jar io.glute
 
 ```
 Usage: gluten-tpch [-hV] [--enable-history] [--error-on-memleak] [--explain]
-                   [--fixed-width-as-double] -b=<backendType> [--cpus=<cpus>]
-                   [--history-ui-port=<hsUiPort>] [--iterations=<iterations>]
-                   [--log-level=<logLevel>] [--off-heap-size=<offHeapSize>]
-                   [-s=<scale>] [--queries=<queries>[,<queries>...]]...
+                   [--fixed-width-as-double] -b=<backendType>
+                   [--baseline-backend-type=<baselineBackendType>]
+                   [--cpus=<cpus>] [--history-ui-port=<hsUiPort>]
+                   [--iterations=<iterations>] [--log-level=<logLevel>]
+                   [--off-heap-size=<offHeapSize>] [-s=<scale>]
+                   [--queries=<queries>[,<queries>...]]...
 Gluten integration test using TPC-H benchmark's data and queries
   -b, --backend-type=<backendType>
-                           Backend used: velox, gazelle-cpp, ...
+                           Backend used: vanilla, velox, gazelle-cpp, ...
+      --baseline-backend-type=<baselineBackendType>
+                           Baseline backend used: vanilla, velox, gazelle-cpp,
+                             ...
+                             Default: vanilla
       --cpus=<cpus>        Executor cpu number
                              Default: 2
       --enable-history     Start a Spark history server during running
