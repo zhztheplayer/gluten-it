@@ -30,16 +30,18 @@ class TpcRunner(val queryResourceFolder: String, val dataPath: String) {
     TpcRunner.createTables(spark, dataPath)
   }
 
-  def runTpcQuery(spark: SparkSession, caseId: String, explain: Boolean = false, desc: String): Seq[Row] = {
+  def runTpcQuery(spark: SparkSession, caseId: String, explain: Boolean = false, desc: String): RunResult = {
     spark.sparkContext.setJobDescription(desc)
     val path = "%s/%s.sql".format(queryResourceFolder, caseId);
     println(s"Executing SQL query from resource path $path...")
     val sql = TpcRunner.resourceToString(path)
+    val prev = System.nanoTime()
     val df = spark.sql(sql)
+    val millis = (System.nanoTime() - prev) / 1000000L
     if (explain) {
       df.explain(extended = true)
     }
-    df.collect()
+    RunResult(df.collect(), millis)
   }
 }
 
@@ -85,3 +87,5 @@ object TpcRunner {
     FileUtils.forceDelete(new File(path))
   }
 }
+
+case class RunResult(rows: Seq[Row], executionTimeMillis: Long)

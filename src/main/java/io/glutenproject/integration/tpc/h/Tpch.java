@@ -14,8 +14,11 @@ import java.util.concurrent.Callable;
     description = "Gluten integration test using TPC-H benchmark's data and queries")
 public class Tpch implements Callable<Integer> {
 
-  @CommandLine.Option(required = true, names = {"-b", "--backend-type"}, description = "Backend used: velox, gazelle-cpp, ...")
+  @CommandLine.Option(required = true, names = {"-b", "--backend-type"}, description = "Backend used: vanilla, velox, gazelle-cpp, ...")
   private String backendType;
+
+  @CommandLine.Option(required = true, names = {"--baseline-backend-type"}, description = "Baseline backend used: vanilla, velox, gazelle-cpp, ...", defaultValue = "vanilla")
+  private String baselineBackendType;
 
   @CommandLine.Option(names = {"-s", "--scale"}, description = "The scale factor of sample TPC-H dataset", defaultValue = "0.1")
   private double scale;
@@ -50,20 +53,28 @@ public class Tpch implements Callable<Integer> {
   @CommandLine.Option(names = {"--iterations"}, description = "How many iterations to run", defaultValue = "1")
   private int iterations;
 
-  @Override
-  public Integer call() throws Exception {
-    final SparkConf baselineConf = io.glutenproject.integration.tpc.h.package$.MODULE$.VANILLA_CONF();
-    final SparkConf testConf;
+  private SparkConf pickSparkConf(String backendType) {
+    SparkConf conf;
     switch (backendType) {
+      case "vanilla":
+        conf = package$.MODULE$.VANILLA_CONF();
+        break;
       case "velox":
-        testConf = package$.MODULE$.VELOX_BACKEND_CONF();
+        conf = package$.MODULE$.VELOX_BACKEND_CONF();
         break;
       case "gazelle-cpp":
-        testConf = package$.MODULE$.GAZELLE_CPP_BACKEND_CONF();
+        conf = package$.MODULE$.GAZELLE_CPP_BACKEND_CONF();
         break;
       default:
         throw new IllegalArgumentException("Backend type not found: " + backendType);
     }
+    return conf;
+  }
+
+  @Override
+  public Integer call() throws Exception {
+    final SparkConf baselineConf = pickSparkConf(baselineBackendType);
+    final SparkConf testConf = pickSparkConf(backendType);
     final List<TypeModifier> typeModifiers = new ArrayList<>();
     final String queryResource;
     if (fixedWidthAsDouble) {
