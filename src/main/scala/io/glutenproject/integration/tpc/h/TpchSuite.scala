@@ -133,15 +133,15 @@ class TpchSuite(
   }
 
   private def printResults(results: List[TestResultLine]) = {
-    printf("|%15s|%15s|%30s|%30s|%15s|%15s|%15s|\n", "Query ID", "Was Passed", "Expected Row Count",
+    printf("|%15s|%15s|%30s|%30s|%30s|%30s|%30s|\n", "Query ID", "Was Passed", "Expected Row Count",
       "Actual Row Count", "Baseline Query Time (Millis)", "Query Time (Millis)", "Query Time Variation")
     results.foreach { line =>
       val timeVariation =
         if (line.expectedExecutionTimeMillis.nonEmpty && line.actualExecutionTimeMillis.nonEmpty) {
-          Some((line.actualExecutionTimeMillis.get - line.expectedExecutionTimeMillis.get).toDouble
-            / line.actualExecutionTimeMillis.get.toDouble / 100)
+          Some(((line.actualExecutionTimeMillis.get - line.expectedExecutionTimeMillis.get).toDouble
+            / line.actualExecutionTimeMillis.get.toDouble) * 100)
         } else None
-      printf("|%15s|%15s|%30s|%30s|%15s|%15s|%15s|\n", line.queryId, line.testPassed,
+      printf("|%15s|%15s|%30s|%30s|%30s|%30s|%30s|\n", line.queryId, line.testPassed,
         line.expectedRowCount.getOrElse("N/A"),
         line.actualRowCount.getOrElse("N/A"),
         line.expectedExecutionTimeMillis.getOrElse("N/A"),
