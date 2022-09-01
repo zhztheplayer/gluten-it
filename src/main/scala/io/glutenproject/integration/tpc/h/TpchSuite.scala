@@ -139,7 +139,7 @@ class TpchSuite(
       val timeVariation =
         if (line.expectedExecutionTimeMillis.nonEmpty && line.actualExecutionTimeMillis.nonEmpty) {
           Some(((line.actualExecutionTimeMillis.get - line.expectedExecutionTimeMillis.get).toDouble
-            / line.expectedExecutionTimeMillis.get.toDouble) * 100)
+            / line.expectedExecutionTimeMillis.get.toDouble) * -100)
         } else None
       printf("|%15s|%15s|%30s|%30s|%30s|%30s|%30s|\n", line.queryId, line.testPassed,
         line.expectedRowCount.getOrElse("N/A"),
