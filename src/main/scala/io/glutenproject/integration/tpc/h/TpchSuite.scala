@@ -146,7 +146,7 @@ class TpchSuite(
         line.actualRowCount.getOrElse("N/A"),
         line.expectedExecutionTimeMillis.getOrElse("N/A"),
         line.actualExecutionTimeMillis.getOrElse("N/A"),
-        timeVariation.map(String.format("%15.2f%%", _)))
+        timeVariation.map("%15.2f%%".format(_)))
     }
   }
 
