@@ -105,20 +105,22 @@ class TpchSuite(
     printf("Summary: %d out of %d queries passed. \n", passedCount, count)
     println("")
     val succeed = results.filter(_.testPassed)
-    val accumulated = succeed.reduce((r1, r2) => TestResultLine("all", true,
-      if (r1.expectedRowCount.nonEmpty && r2.expectedRowCount.nonEmpty)
-        Some(r1.expectedRowCount.get + r2.expectedRowCount.get)
-      else None,
-      if (r1.actualRowCount.nonEmpty && r2.actualRowCount.nonEmpty)
-        Some(r1.actualRowCount.get + r2.actualRowCount.get)
-      else None,
-      if (r1.expectedExecutionTimeMillis.nonEmpty && r2.expectedExecutionTimeMillis.nonEmpty)
-        Some(r1.expectedExecutionTimeMillis.get + r2.expectedExecutionTimeMillis.get)
-      else None,
-      if (r1.actualExecutionTimeMillis.nonEmpty && r2.actualExecutionTimeMillis.nonEmpty)
-        Some(r1.actualExecutionTimeMillis.get + r2.actualExecutionTimeMillis.get)
-      else None, None))
-    printResults(accumulated :: succeed)
+    val accumulated = if (succeed.size > 1) {
+      List(succeed.reduce((r1, r2) => TestResultLine("all", testPassed = true,
+        if (r1.expectedRowCount.nonEmpty && r2.expectedRowCount.nonEmpty)
+          Some(r1.expectedRowCount.get + r2.expectedRowCount.get)
+        else None,
+        if (r1.actualRowCount.nonEmpty && r2.actualRowCount.nonEmpty)
+          Some(r1.actualRowCount.get + r2.actualRowCount.get)
+        else None,
+        if (r1.expectedExecutionTimeMillis.nonEmpty && r2.expectedExecutionTimeMillis.nonEmpty)
+          Some(r1.expectedExecutionTimeMillis.get + r2.expectedExecutionTimeMillis.get)
+        else None,
+        if (r1.actualExecutionTimeMillis.nonEmpty && r2.actualExecutionTimeMillis.nonEmpty)
+          Some(r1.actualExecutionTimeMillis.get + r2.actualExecutionTimeMillis.get)
+        else None, None)))
+    } else Nil
+    printResults(succeed ::: accumulated)
     println("")
 
     if (passedCount == count) {
