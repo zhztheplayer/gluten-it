@@ -5,12 +5,13 @@ import io.glutenproject.integration.tpc.TpcRunner
 import io.glutenproject.integration.tpc.h.TpchSuite.{ALL_QUERY_IDS, TestResultLine}
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.apache.log4j.{Level, LogManager}
+
 import org.apache.spark.SparkConf
 import org.apache.spark.deploy.history.HistoryServerHelper
 import org.apache.spark.sql.{GlutenSparkSessionSwitcher, GlutenTestUtils}
-
 import java.io.File
 import java.util.Scanner
+
 import scala.collection.JavaConverters._
 
 class TpchSuite(
@@ -103,7 +104,21 @@ class TpchSuite(
     println("")
     printf("Summary: %d out of %d queries passed. \n", passedCount, count)
     println("")
-    printResults(results.filter(_.testPassed))
+    val succeed = results.filter(_.testPassed)
+    val accumulated = succeed.reduce((r1, r2) => TestResultLine("all", true,
+      if (r1.expectedRowCount.nonEmpty && r2.expectedRowCount.nonEmpty)
+        Some(r1.expectedRowCount.get + r2.expectedRowCount.get)
+      else None,
+      if (r1.actualRowCount.nonEmpty && r2.actualRowCount.nonEmpty)
+        Some(r1.actualRowCount.get + r2.actualRowCount.get)
+      else None,
+      if (r1.expectedExecutionTimeMillis.nonEmpty && r2.expectedExecutionTimeMillis.nonEmpty)
+        Some(r1.expectedExecutionTimeMillis.get + r2.expectedExecutionTimeMillis.get)
+      else None,
+      if (r1.actualExecutionTimeMillis.nonEmpty && r2.actualExecutionTimeMillis.nonEmpty)
+        Some(r1.actualExecutionTimeMillis.get + r2.actualExecutionTimeMillis.get)
+      else None, None))
+    printResults(accumulated :: succeed)
     println("")
 
     if (passedCount == count) {
