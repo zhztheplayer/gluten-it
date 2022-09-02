@@ -37,11 +37,12 @@ class TpcRunner(val queryResourceFolder: String, val dataPath: String) {
     val sql = TpcRunner.resourceToString(path)
     val prev = System.nanoTime()
     val df = spark.sql(sql)
+    val rows = df.collect()
     val millis = (System.nanoTime() - prev) / 1000000L
     if (explain) {
       df.explain(extended = true)
     }
-    RunResult(df.collect(), millis)
+    RunResult(rows, millis)
   }
 }
 
