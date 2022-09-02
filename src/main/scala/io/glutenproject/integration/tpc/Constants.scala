@@ -30,6 +30,7 @@ object Constants {
     .set("spark.network.timeout", "3601s")
     .set("spark.sql.broadcastTimeout", "1800")
     .set("spark.network.io.preferDirectBufs", "false")
+    .set("spark.gluten.sql.columnar.columnartorow", "false")
 
   val GAZELLE_CPP_BACKEND_CONF: SparkConf = new SparkConf()
     .set("spark.memory.offHeap.enabled", "true")
@@ -44,6 +45,7 @@ object Constants {
     .set("spark.network.timeout", "3601s")
     .set("spark.sql.broadcastTimeout", "1800")
     .set("spark.network.io.preferDirectBufs", "false")
+    .set("spark.gluten.sql.columnar.columnartorow", "false")
 
   val TYPE_MODIFIER_DATE_AS_DOUBLE: TypeModifier = new TypeModifier(DateType, DoubleType) {
     override def modValue(from: Any): Any = {
