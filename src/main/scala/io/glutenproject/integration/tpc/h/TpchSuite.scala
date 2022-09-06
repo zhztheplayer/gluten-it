@@ -100,27 +100,12 @@ class TpchSuite(
       RamStat.getJvmHeapUsed(), RamStat.getJvmHeapTotal(), RamStat.getProcessRamUsed())
 
     println("")
-    println("Test report:")
+    println("Test report: ")
     println("")
     printf("Summary: %d out of %d queries passed. \n", passedCount, count)
     println("")
     val succeed = results.filter(_.testPassed)
-    val accumulated = if (succeed.size > 1) {
-      List(succeed.reduce((r1, r2) => TestResultLine("all", testPassed = true,
-        if (r1.expectedRowCount.nonEmpty && r2.expectedRowCount.nonEmpty)
-          Some(r1.expectedRowCount.get + r2.expectedRowCount.get)
-        else None,
-        if (r1.actualRowCount.nonEmpty && r2.actualRowCount.nonEmpty)
-          Some(r1.actualRowCount.get + r2.actualRowCount.get)
-        else None,
-        if (r1.expectedExecutionTimeMillis.nonEmpty && r2.expectedExecutionTimeMillis.nonEmpty)
-          Some(r1.expectedExecutionTimeMillis.get + r2.expectedExecutionTimeMillis.get)
-        else None,
-        if (r1.actualExecutionTimeMillis.nonEmpty && r2.actualExecutionTimeMillis.nonEmpty)
-          Some(r1.actualExecutionTimeMillis.get + r2.actualExecutionTimeMillis.get)
-        else None, None)))
-    } else Nil
-    printResults(succeed ::: accumulated)
+    printResults(succeed)
     println("")
 
     if (passedCount == count) {
@@ -131,6 +116,17 @@ class TpchSuite(
       printResults(results.filter(!_.testPassed))
       println("")
     }
+
+    var all = aggregate(results, "all")
+
+    if (passedCount != count) {
+      all = aggregate(succeed, "all succeed") ::: all
+    }
+
+    println("Overall: ")
+    println("")
+    printResults(all)
+    println("")
 
     // wait for input, if history server was started
     if (enableHsUi) {
@@ -143,6 +139,22 @@ class TpchSuite(
       return false
     }
     true
+  }
+
+  private def aggregate(succeed: List[TestResultLine], name: String) = {
+    List(succeed.reduce((r1, r2) => TestResultLine(name, testPassed = true,
+      if (r1.expectedRowCount.nonEmpty && r2.expectedRowCount.nonEmpty)
+        Some(r1.expectedRowCount.get + r2.expectedRowCount.get)
+      else None,
+      if (r1.actualRowCount.nonEmpty && r2.actualRowCount.nonEmpty)
+        Some(r1.actualRowCount.get + r2.actualRowCount.get)
+      else None,
+      if (r1.expectedExecutionTimeMillis.nonEmpty && r2.expectedExecutionTimeMillis.nonEmpty)
+        Some(r1.expectedExecutionTimeMillis.get + r2.expectedExecutionTimeMillis.get)
+      else None,
+      if (r1.actualExecutionTimeMillis.nonEmpty && r2.actualExecutionTimeMillis.nonEmpty)
+        Some(r1.actualExecutionTimeMillis.get + r2.actualExecutionTimeMillis.get)
+      else None, None)))
   }
 
   private def resetLogLevel(): Unit = {
