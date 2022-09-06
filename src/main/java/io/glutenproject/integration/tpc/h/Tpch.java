@@ -1,5 +1,6 @@
 package io.glutenproject.integration.tpc.h;
 
+import io.glutenproject.integration.tpc.TypeModifier;
 import org.apache.log4j.Level;
 import org.apache.spark.SparkConf;
 import picocli.CommandLine;

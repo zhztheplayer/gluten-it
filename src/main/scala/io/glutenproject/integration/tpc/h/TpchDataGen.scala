@@ -17,12 +17,12 @@
 
 package io.glutenproject.integration.tpc.h
 
-import io.glutenproject.integration.tpc.TableGen
+import io.glutenproject.integration.tpc.{NoopModifier, DataGen, TypeModifier}
 import io.trino.tpch._
+
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Row, SaveMode, SparkSession}
-
 import java.io.File
 import java.sql.Date
 
@@ -30,7 +30,7 @@ import scala.collection.JavaConverters._
 
 class TpchDataGen(val spark: SparkSession, scale: Double, partitions: Int, path: String,
     typeModifiers: Array[TypeModifier] = Array())
-    extends Serializable with TableGen {
+    extends Serializable with DataGen {
 
   private val typeMapping: java.util.Map[DataType, TypeModifier] = new java.util.HashMap()
 
@@ -345,12 +345,4 @@ class TpchDataGen(val spark: SparkSession, scale: Double, partitions: Int, path:
         .mode(SaveMode.Overwrite)
         .parquet(dir + File.separator + tableName)
   }
-}
-
-abstract class TypeModifier(val from: DataType, val to: DataType) extends Serializable {
-  def modValue(value: Any): Any
-}
-
-class NoopModifier(t: DataType) extends TypeModifier(t, t) {
-  override def modValue(value: Any): Any = value
 }

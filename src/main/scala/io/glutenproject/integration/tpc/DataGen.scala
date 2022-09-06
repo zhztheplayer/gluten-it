@@ -17,6 +17,16 @@
 
 package io.glutenproject.integration.tpc
 
-trait TableGen {
+import org.apache.spark.sql.types.DataType
+
+trait DataGen {
   def gen(): Unit
+}
+
+abstract class TypeModifier(val from: DataType, val to: DataType) extends Serializable {
+  def modValue(value: Any): Any
+}
+
+class NoopModifier(t: DataType) extends TypeModifier(t, t) {
+  override def modValue(value: Any): Any = value
 }
