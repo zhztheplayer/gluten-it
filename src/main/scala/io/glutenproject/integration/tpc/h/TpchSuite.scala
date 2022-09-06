@@ -110,6 +110,7 @@ class TpchSuite(
 
     if (passedCount == count) {
       println("No failed queries. ")
+      println("")
     } else {
       println("Failed queries (a failed query with correct row count indicates value mismatches): ")
       println("")
