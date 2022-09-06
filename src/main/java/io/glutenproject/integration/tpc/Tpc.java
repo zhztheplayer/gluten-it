@@ -1,19 +1,21 @@
-package io.glutenproject.integration.tpc.h;
+package io.glutenproject.integration.tpc;
 
-import io.glutenproject.integration.tpc.TypeModifier;
+import io.glutenproject.integration.tpc.ds.TpcdsSuite;
+import io.glutenproject.integration.tpc.h.TpchSuite;
 import org.apache.log4j.Level;
 import org.apache.spark.SparkConf;
 import picocli.CommandLine;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.Callable;
 
 
-@CommandLine.Command(name = "gluten-tpch", mixinStandardHelpOptions = true,
+@CommandLine.Command(name = "gluten-tpc", mixinStandardHelpOptions = true,
     showDefaultValues = true,
-    description = "Gluten integration test using TPC-H benchmark's data and queries")
-public class Tpch implements Callable<Integer> {
+    description = "Gluten integration test using TPC benchmark's data and queries")
+public class Tpc implements Callable<Integer> {
+
+  @CommandLine.Option(required = true, names = {"--benchmark-type"}, description = "TPC benchmark type: h, ds", defaultValue = "h")
+  private String benchmarkType;
 
   @CommandLine.Option(required = true, names = {"-b", "--backend-type"}, description = "Backend used: vanilla, velox, gazelle-cpp, ...")
   private String backendType;
@@ -58,13 +60,13 @@ public class Tpch implements Callable<Integer> {
     SparkConf conf;
     switch (backendType) {
       case "vanilla":
-        conf = package$.MODULE$.VANILLA_CONF();
+        conf = Constants.VANILLA_CONF();
         break;
       case "velox":
-        conf = package$.MODULE$.VELOX_BACKEND_CONF();
+        conf = Constants.VELOX_BACKEND_CONF();
         break;
       case "gazelle-cpp":
-        conf = package$.MODULE$.GAZELLE_CPP_BACKEND_CONF();
+        conf = Constants.GAZELLE_CPP_BACKEND_CONF();
         break;
       default:
         throw new IllegalArgumentException("Backend type not found: " + backendType);
@@ -76,16 +78,6 @@ public class Tpch implements Callable<Integer> {
   public Integer call() throws Exception {
     final SparkConf baselineConf = pickSparkConf(baselineBackendType);
     final SparkConf testConf = pickSparkConf(backendType);
-    final List<TypeModifier> typeModifiers = new ArrayList<>();
-    final String queryResource;
-    if (fixedWidthAsDouble) {
-      typeModifiers.add(package$.MODULE$.TYPE_MODIFIER_INTEGER_AS_DOUBLE());
-      typeModifiers.add(package$.MODULE$.TYPE_MODIFIER_LONG_AS_DOUBLE());
-      typeModifiers.add(package$.MODULE$.TYPE_MODIFIER_DATE_AS_DOUBLE());
-      queryResource = "/tpch-queries-noint-nodate";
-    } else {
-      queryResource = "/tpch-queries";
-    }
     final Level level;
     switch (logLevel) {
       case 0:
@@ -100,9 +92,21 @@ public class Tpch implements Callable<Integer> {
       default:
         throw new IllegalArgumentException("Log level not found: " + logLevel);
     }
-    final TpchSuite suite = new TpchSuite(testConf, baselineConf, scale,
-        typeModifiers, queryResource, queries, level, explain, errorOnMemLeak,
-        enableHsUi, hsUiPort, cpus, offHeapSize, iterations);
+    final TpcSuite suite;
+    switch (benchmarkType) {
+      case "h":
+        suite = new TpchSuite(testConf, baselineConf, scale,
+                fixedWidthAsDouble, queries, level, explain, errorOnMemLeak,
+                enableHsUi, hsUiPort, cpus, offHeapSize, iterations);
+        break;
+      case "ds":
+        suite = new TpcdsSuite(testConf, baselineConf, scale,
+            fixedWidthAsDouble, queries, level, explain, errorOnMemLeak,
+            enableHsUi, hsUiPort, cpus, offHeapSize, iterations);
+        break;
+      default:
+        throw new IllegalArgumentException("TPC benchmark type not found: " + benchmarkType);
+    }
     boolean succeed = suite.run();
     if (!succeed) {
       return -1;
@@ -111,7 +115,7 @@ public class Tpch implements Callable<Integer> {
   }
 
   public static void main(String... args) {
-    int exitCode = new CommandLine(new Tpch()).execute(args);
+    int exitCode = new CommandLine(new Tpc()).execute(args);
     System.exit(exitCode);
   }
 }

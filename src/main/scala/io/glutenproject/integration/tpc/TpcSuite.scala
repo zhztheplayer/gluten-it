@@ -16,8 +16,7 @@ abstract class TpcSuite(
   private val testConf: SparkConf,
   private val baselineConf: SparkConf,
   private val scale: Double,
-  private val typeModifiers: java.util.List[TypeModifier],
-  private val queryResource: String,
+  private val fixedWidthAsDouble: Boolean,
   private val queryIds: Array[String],
   private val logLevel: Level,
   private val explain: Boolean,
@@ -32,7 +31,7 @@ abstract class TpcSuite(
   resetLogLevel()
 
   protected val sessionSwitcher: GlutenSparkSessionSwitcher = new GlutenSparkSessionSwitcher(cpus)
-  private val runner: TpcRunner = new TpcRunner(queryResource, dataWritePath())
+  private val runner: TpcRunner = new TpcRunner(queryResource(), dataWritePath())
 
   // define initial configs
   sessionSwitcher.defaultConf().set("spark.unsafe.exceptionOnMemoryLeak", s"$errorOnMemLeak")
@@ -220,6 +219,10 @@ abstract class TpcSuite(
   protected def createDataGen(): DataGen
 
   protected def allQueryIds(): Set[String]
+
+  protected def queryResource(): String
+
+  protected def typeModifiers(): List[TypeModifier]
 
 }
 

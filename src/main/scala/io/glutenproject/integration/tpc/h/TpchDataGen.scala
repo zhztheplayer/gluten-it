@@ -29,7 +29,7 @@ import java.sql.Date
 import scala.collection.JavaConverters._
 
 class TpchDataGen(val spark: SparkSession, scale: Double, partitions: Int, path: String,
-    typeModifiers: Array[TypeModifier] = Array())
+    typeModifiers: List[TypeModifier] = List())
     extends Serializable with DataGen {
 
   private val typeMapping: java.util.Map[DataType, TypeModifier] = new java.util.HashMap()
