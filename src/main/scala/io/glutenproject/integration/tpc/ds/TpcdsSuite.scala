@@ -2,6 +2,7 @@ package io.glutenproject.integration.tpc.ds
 
 import io.glutenproject.integration.tpc.{DataGen, TpcSuite, TypeModifier}
 import io.glutenproject.integration.tpc.ds.TpcdsSuite.{ALL_QUERY_IDS, HISTORY_WRITE_PATH, TPCDS_WRITE_PATH}
+import io.glutenproject.integration.tpc.h.{TpchDataGen, TpchSuite}
 import org.apache.log4j.Level
 
 import org.apache.spark.SparkConf
@@ -31,9 +32,8 @@ class TpcdsSuite(
 
   override protected def historyWritePath(): String = HISTORY_WRITE_PATH
 
-  override protected def createDataGen(): DataGen = {
-    // TODO
-  }
+  override protected def createDataGen(): DataGen =  new TpcdsDataGen(sessionSwitcher.spark(),
+    scale, cpus, TPCDS_WRITE_PATH, typeModifiers())
 
   override protected def allQueryIds(): Set[String] = ALL_QUERY_IDS
 
