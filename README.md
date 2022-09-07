@@ -28,20 +28,23 @@ java -Xmx5G -cp target/gluten-it-1.0-SNAPSHOT-jar-with-dependencies.jar io.glute
 ### CMD args
 
 ```
-Usage: gluten-tpch [-hV] [--enable-history] [--error-on-memleak] [--explain]
-                   [--fixed-width-as-double] -b=<backendType>
-                   [--baseline-backend-type=<baselineBackendType>]
-                   [--cpus=<cpus>] [--history-ui-port=<hsUiPort>]
-                   [--iterations=<iterations>] [--log-level=<logLevel>]
-                   [--off-heap-size=<offHeapSize>] [-s=<scale>]
-                   [--queries=<queries>[,<queries>...]]...
-Gluten integration test using TPC-H benchmark's data and queries
+
+Usage: gluten-tpc [-hV] [--enable-history] [--error-on-memleak] [--explain]
+                  [--fixed-width-as-double] -b=<backendType>
+                  [--baseline-backend-type=<baselineBackendType>]
+                  --benchmark-type=<benchmarkType> [--cpus=<cpus>]
+                  [--history-ui-port=<hsUiPort>] [--iterations=<iterations>]
+                  [--log-level=<logLevel>] [--off-heap-size=<offHeapSize>]
+                  [-s=<scale>] [--queries=<queries>[,<queries>...]]...
+Gluten integration test using TPC benchmark's data and queries
   -b, --backend-type=<backendType>
                            Backend used: vanilla, velox, gazelle-cpp, ...
       --baseline-backend-type=<baselineBackendType>
                            Baseline backend used: vanilla, velox, gazelle-cpp,
                              ...
                              Default: vanilla
+      --benchmark-type=<benchmarkType>
+                           TPC benchmark type: h, ds
       --cpus=<cpus>        Executor cpu number
                              Default: 2
       --enable-history     Start a Spark history server during running
