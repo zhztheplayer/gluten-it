@@ -17,7 +17,7 @@
 
 package io.glutenproject.integration.tpc
 
-import org.apache.spark.sql.types.DataType
+import org.apache.spark.sql.types.{DataType, StructField, StructType}
 
 trait DataGen {
   def gen(): Unit
@@ -29,4 +29,35 @@ abstract class TypeModifier(val from: DataType, val to: DataType) extends Serial
 
 class NoopModifier(t: DataType) extends TypeModifier(t, t) {
   override def modValue(value: Any): Any = value
+}
+
+object DataGen {
+  def getRowModifier(schema: StructType, typeModifiers: List[TypeModifier]): Int => TypeModifier = {
+    val typeMapping: java.util.Map[DataType, TypeModifier] = new java.util.HashMap()
+
+    typeModifiers.foreach { m =>
+      if (typeMapping.containsKey(m.from)) {
+        throw new IllegalStateException()
+      }
+      typeMapping.put(m.from, m)
+    }
+    val modifiers = new java.util.ArrayList[TypeModifier]()
+    schema.fields.foreach { f =>
+      if (typeMapping.containsKey(f.dataType)) {
+        modifiers.add(typeMapping.get(f.dataType))
+      } else {
+        modifiers.add(new NoopModifier(f.dataType))
+      }
+    }
+    i => modifiers.get(i)
+  }
+
+  def modifySchema(schema: StructType, rowModifier: Int => TypeModifier): StructType = {
+    val modifiedSchema = new StructType(
+      schema.fields.zipWithIndex.map { case (f, i) =>
+        val modifier = rowModifier.apply(i)
+        StructField(f.name, modifier.to, f.nullable, f.metadata)
+      })
+    modifiedSchema
+  }
 }

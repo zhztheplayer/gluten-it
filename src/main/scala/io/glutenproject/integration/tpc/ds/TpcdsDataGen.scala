@@ -1,32 +1,21 @@
 package io.glutenproject.integration.tpc.ds
 
-import java.io.{File, IOException}
+import java.io.File
 
-import scala.collection.mutable.ListBuffer
-import scala.collection.JavaConverters._
-
-import io.glutenproject.integration.tpc.{DataGen, TypeModifier}
+import io.glutenproject.integration.tpc.{DataGen, NoopModifier, TypeModifier}
 import io.trino.tpcds._
-import io.trino.tpcds.Results.constructResults
 
-import org.apache.spark.sql.{Column, Row, SparkSession}
+import org.apache.spark.sql.{Column, Row, SaveMode, SparkSession}
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.types._
+import scala.collection.JavaConverters._
 
-class TpcdsDataGen(val spark: SparkSession, scale: Double, partitions: Int, path: String,
-  typeModifiers: Array[TypeModifier] = Array())
+class TpcdsDataGen(val spark: SparkSession, scale: Double, partitions: Int, dir: String,
+  typeModifiers: List[TypeModifier] = List())
   extends Serializable with DataGen {
 
-  private val typeMapping: java.util.Map[DataType, TypeModifier] = new java.util.HashMap()
-
-  typeModifiers.foreach { m =>
-    if (typeMapping.containsKey(m.from)) {
-      throw new IllegalStateException()
-    }
-    typeMapping.put(m.from, m)
-  }
-
-  def writeParquetTable(name: String, rows: List[Row]): Unit = {
+  def writeParquetTable(t: Table, session: Session): Unit = {
+    val name = t.getName
     if (name.equals("dbgen_version")) {
       return
     }
@@ -61,86 +50,54 @@ class TpcdsDataGen(val spark: SparkSession, scale: Double, partitions: Int, path
       case "web_sales" => List("ws_sold_date_sk")
       case _ => List[String]()
     }
-    writeParquetTable(name, rows, schema, partitionBy)
+
+    writeParquetTable(name, t, session, schema, partitionBy)
   }
 
-  private def writeParquetTable(tableName: String, rows: List[Row], schema: StructType,
+  private def writeParquetTable(tableName: String, t: Table, session: Session, schema: StructType,
     partitionBy: List[String]): Unit = {
-    if (rows.isEmpty) {
-      return
+
+    val rowModifier = DataGen.getRowModifier(schema, typeModifiers)
+    val modifiedSchema = DataGen.modifySchema(schema, rowModifier)
+
+    val stringSchema = StructType(modifiedSchema.fields.map(f => StructField(f.name, StringType)))
+
+    val columns = modifiedSchema.fields.map { f =>
+      new Column(f.name).cast(f.dataType).as(f.name)
     }
 
-    val stringData = spark.range(0L, rows.size, 1L, 1)
+    spark.range(0, partitions, 1L, partitions)
       .mapPartitions { itr =>
-        val rowItr = rows.iterator
-        itr.map { _ =>
-          rowItr.next()
+        val id = itr.toArray
+        if (id.length != 1) {
+          throw new IllegalStateException()
         }
-      }(RowEncoder(StructType(schema.fields.map(f => StructField(f.name, StringType)))))
-
-    val convertedData = {
-      val columns = schema.fields.map { f =>
-        new Column(f.name).cast(f.dataType).as(f.name)
-      }
-      stringData.select(columns: _*)
-    }
-
-    convertedData.coalesce(1)
+        val chunkSession = session.withChunkNumber(id(0).toInt + 1)
+        val results = Results.constructResults(t, chunkSession).asScala.toIterator
+        results.map { parentAndChildRow =>
+          val array: Array[String] = parentAndChildRow.get(0).asScala.toArray
+          Row(array: _*)
+        }
+      }(RowEncoder(stringSchema))
+      .select(columns: _*)
       .write
-      .format("parquet")
-      .mode("overwrite")
+      .mode(SaveMode.Overwrite)
       .partitionBy(partitionBy.toArray: _*)
-      .save(path + File.separator + tableName)
+      .parquet(dir + File.separator + tableName)
   }
 
   override def gen(): Unit = {
     val options = new Options()
     options.scale = scale
+    options.parallelism = partitions
     val session = options.toSession
-    val tableGenerator = new TpcdsDataGen.Gen(session)
     Table.getBaseTables.forEach { t =>
-      val (p, c): (List[Row], List[Row]) = tableGenerator.generateSparkRows(t)
-      writeParquetTable(t.getName, p)
-      if (t.hasChild) {
-        writeParquetTable(t.getChild.getName, c)
-      }
+      writeParquetTable(t, session)
     }
   }
 }
 
 object TpcdsDataGen {
-
-  class Gen(session: Session) extends TableGenerator(session) {
-
-    override def generateTable(table: Table): Unit = {
-      throw new UnsupportedOperationException
-    }
-
-    def generateSparkRows(table: Table): (List[Row], List[Row]) = {
-      if (table.isChild && !session.generateOnlyOneTable) {
-        return (List.empty, List.empty)
-      }
-      val parentRows = ListBuffer[Row]()
-      val childRows = ListBuffer[Row]()
-      try {
-        val results = constructResults(table, session)
-        for (parentAndChildRows <- results.asScala) {
-          if (parentAndChildRows.size > 0) {
-            val parentRow = parentAndChildRows.get(0).asScala
-            parentRows.append(Row.fromSeq(parentRow))
-          }
-          if (parentAndChildRows.size > 1) {
-            val childRow = parentAndChildRows.get(1).asScala
-            childRows.append(Row.fromSeq(childRow))
-          }
-        }
-      } catch {
-        case e: IOException =>
-          throw new TpcdsException(e.getMessage)
-      }
-      (parentRows.toList, childRows.toList)
-    }
-  }
 
   // generated by script
   private def catalogSalesSchema = {
@@ -181,6 +138,7 @@ object TpcdsDataGen {
       StructField("cs_net_profit", DecimalType(7, 2))
     ))
   }
+
   private def catalogReturnsSchema = {
     StructType(Seq(
       StructField("cr_returned_date_sk", LongType),
@@ -212,6 +170,7 @@ object TpcdsDataGen {
       StructField("cr_net_loss", DecimalType(7, 2))
     ))
   }
+
   private def inventorySchema = {
     StructType(Seq(
       StructField("inv_date_sk", LongType),
@@ -220,6 +179,7 @@ object TpcdsDataGen {
       StructField("inv_quantity_on_hand", LongType)
     ))
   }
+
   private def storeSalesSchema = {
     StructType(Seq(
       StructField("ss_sold_date_sk", LongType),
@@ -247,6 +207,7 @@ object TpcdsDataGen {
       StructField("ss_net_profit", DecimalType(7, 2))
     ))
   }
+
   private def storeReturnsSchema = {
     StructType(Seq(
       StructField("sr_returned_date_sk", LongType),
@@ -271,6 +232,7 @@ object TpcdsDataGen {
       StructField("sr_net_loss", DecimalType(7, 2))
     ))
   }
+
   private def webSalesSchema = {
     StructType(Seq(
       StructField("ws_sold_date_sk", LongType),
@@ -309,6 +271,7 @@ object TpcdsDataGen {
       StructField("ws_net_profit", DecimalType(7, 2))
     ))
   }
+
   private def webReturnsSchema = {
     StructType(Seq(
       StructField("wr_returned_date_sk", LongType),
@@ -337,6 +300,7 @@ object TpcdsDataGen {
       StructField("wr_net_loss", DecimalType(7, 2))
     ))
   }
+
   private def callCenterSchema = {
     StructType(Seq(
       StructField("cc_call_center_sk", LongType),
@@ -372,6 +336,7 @@ object TpcdsDataGen {
       StructField("cc_tax_percentage", DecimalType(5, 2))
     ))
   }
+
   private def catalogPageSchema = {
     StructType(Seq(
       StructField("cp_catalog_page_sk", LongType),
@@ -385,6 +350,7 @@ object TpcdsDataGen {
       StructField("cp_type", StringType)
     ))
   }
+
   private def customerSchema = {
     StructType(Seq(
       StructField("c_customer_sk", LongType),
@@ -407,6 +373,7 @@ object TpcdsDataGen {
       StructField("c_last_review_date", StringType)
     ))
   }
+
   private def customerAddressSchema = {
     StructType(Seq(
       StructField("ca_address_sk", LongType),
@@ -424,6 +391,7 @@ object TpcdsDataGen {
       StructField("ca_location_type", StringType)
     ))
   }
+
   private def customerDemographicsSchema = {
     StructType(Seq(
       StructField("cd_demo_sk", LongType),
@@ -437,6 +405,7 @@ object TpcdsDataGen {
       StructField("cd_dep_college_count", LongType)
     ))
   }
+
   private def dateDimSchema = {
     StructType(Seq(
       StructField("d_date_sk", LongType),
@@ -469,6 +438,7 @@ object TpcdsDataGen {
       StructField("d_current_year", StringType)
     ))
   }
+
   private def householdDemographicsSchema = {
     StructType(Seq(
       StructField("hd_demo_sk", LongType),
@@ -478,6 +448,7 @@ object TpcdsDataGen {
       StructField("hd_vehicle_count", LongType)
     ))
   }
+
   private def incomeBandSchema = {
     StructType(Seq(
       StructField("ib_income_band_sk", LongType),
@@ -485,6 +456,7 @@ object TpcdsDataGen {
       StructField("ib_upper_bound", LongType)
     ))
   }
+
   private def itemSchema = {
     StructType(Seq(
       StructField("i_item_sk", LongType),
@@ -511,6 +483,7 @@ object TpcdsDataGen {
       StructField("i_product_name", StringType)
     ))
   }
+
   private def promotionSchema = {
     StructType(Seq(
       StructField("p_promo_sk", LongType),
@@ -534,6 +507,7 @@ object TpcdsDataGen {
       StructField("p_discount_active", StringType)
     ))
   }
+
   private def reasonSchema = {
     StructType(Seq(
       StructField("r_reason_sk", LongType),
@@ -541,6 +515,7 @@ object TpcdsDataGen {
       StructField("r_reason_desc", StringType)
     ))
   }
+
   private def shipModeSchema = {
     StructType(Seq(
       StructField("sm_ship_mode_sk", LongType),
@@ -551,6 +526,7 @@ object TpcdsDataGen {
       StructField("sm_contract", StringType)
     ))
   }
+
   private def storeSchema = {
     StructType(Seq(
       StructField("s_store_sk", LongType),
@@ -584,6 +560,7 @@ object TpcdsDataGen {
       StructField("s_tax_precentage", DecimalType(5, 2))
     ))
   }
+
   private def timeDimSchema = {
     StructType(Seq(
       StructField("t_time_sk", LongType),
@@ -598,6 +575,7 @@ object TpcdsDataGen {
       StructField("t_meal_time", StringType)
     ))
   }
+
   private def warehouseSchema = {
     StructType(Seq(
       StructField("w_warehouse_sk", LongType),
@@ -616,6 +594,7 @@ object TpcdsDataGen {
       StructField("w_gmt_offset", DecimalType(5, 2))
     ))
   }
+
   private def webPageSchema = {
     StructType(Seq(
       StructField("wp_web_page_sk", LongType),
@@ -634,6 +613,7 @@ object TpcdsDataGen {
       StructField("wp_max_ad_count", LongType)
     ))
   }
+
   private def webSiteSchema = {
     StructType(Seq(
       StructField("web_site_sk", LongType),
