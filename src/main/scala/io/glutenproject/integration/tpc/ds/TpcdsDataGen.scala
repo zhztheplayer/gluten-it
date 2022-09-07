@@ -75,6 +75,8 @@ class TpcdsDataGen(val spark: SparkSession, scale: Double, partitions: Int, dir:
         val chunkSession = session.withChunkNumber(id(0).toInt + 1)
         val results = Results.constructResults(t, chunkSession).asScala.toIterator
         results.map { parentAndChildRow =>
+          // Skip child table when generating parent table,
+          // we generate every table individually no matter it is parent or child.
           val array: Array[String] = parentAndChildRow.get(0).asScala.toArray
           Row(array: _*)
         }
