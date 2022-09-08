@@ -29,7 +29,7 @@ public class Tpc implements Callable<Integer> {
   @CommandLine.Option(names = {"--fixed-width-as-double"}, description = "Generate integer/long/date as double", defaultValue = "false")
   private boolean fixedWidthAsDouble;
 
-  @CommandLine.Option(names = {"--queries"}, description = "Set a comma-seperated list of query IDs to run", split = ",", defaultValue = "q1,q2,q3,q4,q5,q6,q7,q8,q9,q10,q11,q12,q13,q14,q15,q16,q17,q18,q19,q20,q21,q22")
+  @CommandLine.Option(names = {"--queries"}, description = "Set a comma-seperated list of query IDs to run, run all queries if not specified. Example: --queries=q1,q6", split = ",", defaultValue = "__all__")
   private String[] queries;
 
   @CommandLine.Option(names = {"--log-level"}, description = "Set log level: 0 for DEBUG, 1 for INFO, 2 for WARN", defaultValue = "2")

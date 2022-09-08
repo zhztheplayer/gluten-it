@@ -88,7 +88,12 @@ abstract class TpcSuite(
     val allQueries = allQueryIds()
     val results = (0 until iterations).flatMap { iteration =>
       println(s"Running tests (iteration $iteration)...")
-      queryIds.map { queryId =>
+      val runQueryIds = if (queryIds.length == 1 && queryIds(0) == "__all__") {
+        allQueries
+      } else {
+        queryIds.toSet
+      }
+      runQueryIds.map { queryId =>
         if (!allQueries.contains(queryId)) {
           throw new IllegalArgumentException(s"Query ID doesn't exist: $queryId")
         }
