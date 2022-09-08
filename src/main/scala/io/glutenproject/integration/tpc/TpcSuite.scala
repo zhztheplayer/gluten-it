@@ -88,10 +88,11 @@ abstract class TpcSuite(
     val allQueries = allQueryIds()
     val results = (0 until iterations).flatMap { iteration =>
       println(s"Running tests (iteration $iteration)...")
-      val runQueryIds = if (queryIds.length == 1 && queryIds(0) == "__all__") {
-        allQueries
-      } else {
-        queryIds
+      val runQueryIds = queryIds match {
+        case Array("__all__") =>
+          allQueries
+        case _ =>
+          queryIds
       }
       val allQueriesSet = allQueries.toSet
       runQueryIds.map { queryId =>
