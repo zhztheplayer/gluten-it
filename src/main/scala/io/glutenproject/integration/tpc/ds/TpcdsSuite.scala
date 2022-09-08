@@ -2,7 +2,6 @@ package io.glutenproject.integration.tpc.ds
 
 import io.glutenproject.integration.tpc.{DataGen, TpcSuite, TypeModifier}
 import io.glutenproject.integration.tpc.ds.TpcdsSuite.{ALL_QUERY_IDS, HISTORY_WRITE_PATH, TPCDS_WRITE_PATH}
-import io.glutenproject.integration.tpc.h.{TpchDataGen, TpchSuite}
 import org.apache.log4j.Level
 
 import org.apache.spark.SparkConf
@@ -20,9 +19,10 @@ class TpcdsSuite(
   val hsUiPort: Int,
   val cpus: Int,
   val offHeapSize: String,
-  val iterations: Int) extends TpcSuite(testConf, baselineConf, scale, fixedWidthAsDouble,
+  val iterations: Int,
+  val enableAqe: Boolean) extends TpcSuite(testConf, baselineConf, scale, fixedWidthAsDouble,
   queryIds, logLevel, explain, errorOnMemLeak, enableHsUi, hsUiPort, cpus,
-  offHeapSize, iterations) {
+  offHeapSize, iterations, enableAqe) {
 
   if (fixedWidthAsDouble) {
     throw new IllegalArgumentException("--fixed-width-as-double is not supported in TPC-DS suite")
