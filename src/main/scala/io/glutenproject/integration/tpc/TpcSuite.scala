@@ -26,7 +26,7 @@ abstract class TpcSuite(
   private val cpus: Int,
   private val offHeapSize: String,
   private val iterations: Int,
-  private val enableAqe: Boolean) {
+  private val disableAqe: Boolean) {
 
   System.setProperty("spark.testing", "true")
   resetLogLevel()
@@ -48,8 +48,8 @@ abstract class TpcSuite(
     sessionSwitcher.defaultConf().set("spark.eventLog.dir", historyWritePath())
   }
 
-  if (enableAqe) {
-    sessionSwitcher.defaultConf().set("spark.sql.adaptive.enabled", "true")
+  if (disableAqe) {
+    sessionSwitcher.defaultConf().set("spark.sql.adaptive.enabled", "false")
   }
 
   // register sessions

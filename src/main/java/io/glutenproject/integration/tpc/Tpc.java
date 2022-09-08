@@ -56,8 +56,8 @@ public class Tpc implements Callable<Integer> {
   @CommandLine.Option(names = {"--iterations"}, description = "How many iterations to run", defaultValue = "1")
   private int iterations;
 
-  @CommandLine.Option(names = {"--enable-aqe"}, description = "Enable Spark AQE", defaultValue = "false")
-  private boolean enableAqe;
+  @CommandLine.Option(names = {"--disable-aqe"}, description = "Disable Spark AQE", defaultValue = "false")
+  private boolean disableAqe;
 
   private SparkConf pickSparkConf(String backendType) {
     SparkConf conf;
@@ -100,12 +100,12 @@ public class Tpc implements Callable<Integer> {
       case "h":
         suite = new TpchSuite(testConf, baselineConf, scale,
                 fixedWidthAsDouble, queries, level, explain, errorOnMemLeak,
-                enableHsUi, hsUiPort, cpus, offHeapSize, iterations, enableAqe);
+                enableHsUi, hsUiPort, cpus, offHeapSize, iterations, disableAqe);
         break;
       case "ds":
         suite = new TpcdsSuite(testConf, baselineConf, scale,
             fixedWidthAsDouble, queries, level, explain, errorOnMemLeak,
-            enableHsUi, hsUiPort, cpus, offHeapSize, iterations, enableAqe);
+            enableHsUi, hsUiPort, cpus, offHeapSize, iterations, disableAqe);
         break;
       default:
         throw new IllegalArgumentException("TPC benchmark type not found: " + benchmarkType);

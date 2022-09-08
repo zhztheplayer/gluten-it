@@ -20,9 +20,9 @@ class TpchSuite(
   val cpus: Int,
   val offHeapSize: String,
   val iterations: Int,
-  val enableAqe: Boolean) extends TpcSuite(testConf, baselineConf, scale, fixedWidthAsDouble,
+  val disableAqe: Boolean) extends TpcSuite(testConf, baselineConf, scale, fixedWidthAsDouble,
   queryIds, logLevel, explain, errorOnMemLeak, enableHsUi, hsUiPort, cpus,
-  offHeapSize, iterations, enableAqe) {
+  offHeapSize, iterations, disableAqe) {
 
   override protected def dataWritePath(): String = TPCH_WRITE_PATH
 
