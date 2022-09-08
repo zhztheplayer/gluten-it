@@ -14,7 +14,7 @@ class TpcdsDataGen(val spark: SparkSession, scale: Double, partitions: Int, dir:
   typeModifiers: List[TypeModifier] = List())
   extends Serializable with DataGen {
 
-  def writeParquetTable(t: Table, session: Session): Unit = {
+  def writeParquetTable(t: Table): Unit = {
     val name = t.getName
     if (name.equals("dbgen_version")) {
       return
@@ -51,10 +51,10 @@ class TpcdsDataGen(val spark: SparkSession, scale: Double, partitions: Int, dir:
       case _ => List[String]()
     }
 
-    writeParquetTable(name, t, session, schema, partitionBy)
+    writeParquetTable(name, t, schema, partitionBy)
   }
 
-  private def writeParquetTable(tableName: String, t: Table, session: Session, schema: StructType,
+  private def writeParquetTable(tableName: String, t: Table, schema: StructType,
     partitionBy: List[String]): Unit = {
 
     val rowModifier = DataGen.getRowModifier(schema, typeModifiers)
@@ -72,6 +72,10 @@ class TpcdsDataGen(val spark: SparkSession, scale: Double, partitions: Int, dir:
         if (id.length != 1) {
           throw new IllegalStateException()
         }
+        val options = new Options()
+        options.scale = scale
+        options.parallelism = partitions
+        val session = options.toSession
         val chunkSession = session.withChunkNumber(id(0).toInt + 1)
         val results = Results.constructResults(t, chunkSession).asScala.toIterator
         results.map { parentAndChildRow =>
@@ -89,12 +93,8 @@ class TpcdsDataGen(val spark: SparkSession, scale: Double, partitions: Int, dir:
   }
 
   override def gen(): Unit = {
-    val options = new Options()
-    options.scale = scale
-    options.parallelism = partitions
-    val session = options.toSession
     Table.getBaseTables.forEach { t =>
-      writeParquetTable(t, session)
+      writeParquetTable(t)
     }
   }
 }
