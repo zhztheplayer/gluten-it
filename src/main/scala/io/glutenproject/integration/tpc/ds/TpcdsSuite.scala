@@ -20,9 +20,10 @@ class TpcdsSuite(
   val cpus: Int,
   val offHeapSize: String,
   val iterations: Int,
-  val disableAqe: Boolean) extends TpcSuite(testConf, baselineConf, scale, fixedWidthAsDouble,
+  val disableAqe: Boolean,
+  val disableBhj: Boolean) extends TpcSuite(testConf, baselineConf, scale, fixedWidthAsDouble,
   queryIds, logLevel, explain, errorOnMemLeak, enableHsUi, hsUiPort, cpus,
-  offHeapSize, iterations, disableAqe) {
+  offHeapSize, iterations, disableAqe, disableBhj) {
 
   if (fixedWidthAsDouble) {
     throw new IllegalArgumentException("--fixed-width-as-double is not supported in TPC-DS suite")
@@ -32,7 +33,7 @@ class TpcdsSuite(
 
   override protected def historyWritePath(): String = HISTORY_WRITE_PATH
 
-  override protected def createDataGen(): DataGen =  new TpcdsDataGen(sessionSwitcher.spark(),
+  override protected def createDataGen(): DataGen = new TpcdsDataGen(sessionSwitcher.spark(),
     scale, cpus, TPCDS_WRITE_PATH, typeModifiers())
 
   override protected def allQueryIds(): Set[String] = ALL_QUERY_IDS

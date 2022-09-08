@@ -56,8 +56,11 @@ public class Tpc implements Callable<Integer> {
   @CommandLine.Option(names = {"--iterations"}, description = "How many iterations to run", defaultValue = "1")
   private int iterations;
 
-  @CommandLine.Option(names = {"--disable-aqe"}, description = "Disable Spark AQE", defaultValue = "false")
+  @CommandLine.Option(names = {"--disable-aqe"}, description = "Disable Spark SQL adaptive query execution", defaultValue = "false")
   private boolean disableAqe;
+
+  @CommandLine.Option(names = {"--disable-bhj"}, description = "Disable Spark SQL broadcast hash join", defaultValue = "false")
+  private boolean disableBhj;
 
   private SparkConf pickSparkConf(String backendType) {
     SparkConf conf;
@@ -100,12 +103,12 @@ public class Tpc implements Callable<Integer> {
       case "h":
         suite = new TpchSuite(testConf, baselineConf, scale,
                 fixedWidthAsDouble, queries, level, explain, errorOnMemLeak,
-                enableHsUi, hsUiPort, cpus, offHeapSize, iterations, disableAqe);
+                enableHsUi, hsUiPort, cpus, offHeapSize, iterations, disableAqe, disableBhj);
         break;
       case "ds":
         suite = new TpcdsSuite(testConf, baselineConf, scale,
             fixedWidthAsDouble, queries, level, explain, errorOnMemLeak,
-            enableHsUi, hsUiPort, cpus, offHeapSize, iterations, disableAqe);
+            enableHsUi, hsUiPort, cpus, offHeapSize, iterations, disableAqe, disableBhj);
         break;
       default:
         throw new IllegalArgumentException("TPC benchmark type not found: " + benchmarkType);

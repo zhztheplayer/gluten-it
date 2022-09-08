@@ -26,7 +26,8 @@ abstract class TpcSuite(
   private val cpus: Int,
   private val offHeapSize: String,
   private val iterations: Int,
-  private val disableAqe: Boolean) {
+  private val disableAqe: Boolean,
+  private val disableBhj: Boolean) {
 
   System.setProperty("spark.testing", "true")
   resetLogLevel()
@@ -50,6 +51,10 @@ abstract class TpcSuite(
 
   if (disableAqe) {
     sessionSwitcher.defaultConf().set("spark.sql.adaptive.enabled", "false")
+  }
+
+  if (disableBhj) {
+    sessionSwitcher.defaultConf().set("spark.sql.autoBroadcastJoinThreshold", "-1")
   }
 
   // register sessions
