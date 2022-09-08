@@ -91,10 +91,11 @@ abstract class TpcSuite(
       val runQueryIds = if (queryIds.length == 1 && queryIds(0) == "__all__") {
         allQueries
       } else {
-        queryIds.toSet
+        queryIds
       }
+      val allQueriesSet = allQueries.toSet
       runQueryIds.map { queryId =>
-        if (!allQueries.contains(queryId)) {
+        if (!allQueriesSet.contains(queryId)) {
           throw new IllegalArgumentException(s"Query ID doesn't exist: $queryId")
         }
         runTpcQuery(queryId)
@@ -233,7 +234,7 @@ abstract class TpcSuite(
 
   protected def createDataGen(): DataGen
 
-  protected def allQueryIds(): Set[String]
+  protected def allQueryIds(): Array[String]
 
   protected def queryResource(): String
 

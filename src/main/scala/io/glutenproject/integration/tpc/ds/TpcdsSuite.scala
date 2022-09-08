@@ -36,7 +36,7 @@ class TpcdsSuite(
   override protected def createDataGen(): DataGen = new TpcdsDataGen(sessionSwitcher.spark(),
     scale, cpus, TPCDS_WRITE_PATH, typeModifiers())
 
-  override protected def allQueryIds(): Set[String] = ALL_QUERY_IDS
+  override protected def allQueryIds(): Array[String] = ALL_QUERY_IDS
 
   override protected def queryResource(): String = {
     "/tpcds-queries"
@@ -49,7 +49,7 @@ class TpcdsSuite(
 
 object TpcdsSuite {
   private val TPCDS_WRITE_PATH = "/tmp/tpcds-generated"
-  private val ALL_QUERY_IDS = Set("q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8", "q9", "q10",
+  private val ALL_QUERY_IDS = Array("q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8", "q9", "q10",
     "q11", "q12", "q13", "q14a", "q14b", "q15", "q16", "q17", "q18", "q19", "q20", "q21", "q22",
     "q23a", "q23b", "q24a", "q24b", "q25", "q26", "q27", "q28", "q29", "q30", "q31", "q32", "q33",
     "q34", "q35", "q36", "q37", "q38", "q39a", "q39b", "q40", "q41", "q42", "q43", "q44", "q45",
