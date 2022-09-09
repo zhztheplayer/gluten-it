@@ -73,7 +73,7 @@ Gluten integration test using TPC benchmark's data and queries
                              all queries if not specified. Example:
                              --queries=q1,q6
                              Default: __all__
-  -s, --scale=<scale>      The scale factor of sample TPC-H dataset
+  -s, --scale=<scale>      The scale factor of sample TPC dataset
                              Default: 0.1
   -V, --version            Print version information and exit.
 
