@@ -29,17 +29,8 @@ import java.sql.Date
 import scala.collection.JavaConverters._
 
 class TpchDataGen(val spark: SparkSession, scale: Double, partitions: Int, path: String,
-    typeModifiers: Array[TypeModifier] = Array())
+    typeModifiers: List[TypeModifier] = List())
     extends Serializable with DataGen {
-
-  private val typeMapping: java.util.Map[DataType, TypeModifier] = new java.util.HashMap()
-
-  typeModifiers.foreach { m =>
-    if (typeMapping.containsKey(m.from)) {
-      throw new IllegalStateException()
-    }
-    typeMapping.put(m.from, m)
-  }
 
   override def gen(): Unit = {
     generate(path, "lineitem", lineItemSchema, partitions, lineItemGenerator, lineItemParser)
@@ -308,21 +299,8 @@ class TpchDataGen(val spark: SparkSession, scale: Double, partitions: Int, path:
       gen: (Int, Int) => java.lang.Iterable[U],
       parser: U => Row): Unit = {
     println(s"Generating table $tableName...")
-    val modifiers = new java.util.ArrayList[TypeModifier]()
-    schema.fields.foreach { f =>
-      if (typeMapping.containsKey(f.dataType)) {
-        modifiers.add(typeMapping.get(f.dataType))
-      } else {
-        modifiers.add(new NoopModifier(f.dataType))
-      }
-    }
-
-    val modifiedSchema = new StructType(
-      schema.fields.zipWithIndex.map { case (f, i) =>
-        val modifier = modifiers.get(i)
-        StructField(f.name, modifier.to, f.nullable, f.metadata)
-      })
-
+    val rowModifier = DataGen.getRowModifier(schema, typeModifiers)
+    val modifiedSchema = DataGen.modifySchema(schema, rowModifier)
     spark.range(0, partitions, 1L, partitions)
         .mapPartitions { itr =>
           val id = itr.toArray
@@ -334,7 +312,7 @@ class TpchDataGen(val spark: SparkSession, scale: Double, partitions: Int, path:
           val rows = dataItr.asScala.map { item =>
             val row = parser(item)
             val modifiedRow = Row(row.toSeq.zipWithIndex.map { case (v, i) =>
-              val modifier = modifiers.get(i)
+              val modifier = rowModifier.apply(i)
               modifier.modValue(v)
             }.toArray: _*)
             modifiedRow

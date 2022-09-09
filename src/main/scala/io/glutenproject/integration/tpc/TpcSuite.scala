@@ -16,8 +16,7 @@ abstract class TpcSuite(
   private val testConf: SparkConf,
   private val baselineConf: SparkConf,
   private val scale: Double,
-  private val typeModifiers: java.util.List[TypeModifier],
-  private val queryResource: String,
+  private val fixedWidthAsDouble: Boolean,
   private val queryIds: Array[String],
   private val logLevel: Level,
   private val explain: Boolean,
@@ -26,13 +25,15 @@ abstract class TpcSuite(
   private val hsUiPort: Int,
   private val cpus: Int,
   private val offHeapSize: String,
-  private val iterations: Int) {
+  private val iterations: Int,
+  private val disableAqe: Boolean,
+  private val disableBhj: Boolean) {
 
   System.setProperty("spark.testing", "true")
   resetLogLevel()
 
   protected val sessionSwitcher: GlutenSparkSessionSwitcher = new GlutenSparkSessionSwitcher(cpus)
-  private val runner: TpcRunner = new TpcRunner(queryResource, dataWritePath())
+  private val runner: TpcRunner = new TpcRunner(queryResource(), dataWritePath())
 
   // define initial configs
   sessionSwitcher.defaultConf().set("spark.unsafe.exceptionOnMemoryLeak", s"$errorOnMemLeak")
@@ -46,6 +47,14 @@ abstract class TpcSuite(
     }
     sessionSwitcher.defaultConf().set("spark.eventLog.enabled", "true")
     sessionSwitcher.defaultConf().set("spark.eventLog.dir", historyWritePath())
+  }
+
+  if (disableAqe) {
+    sessionSwitcher.defaultConf().set("spark.sql.adaptive.enabled", "false")
+  }
+
+  if (disableBhj) {
+    sessionSwitcher.defaultConf().set("spark.sql.autoBroadcastJoinThreshold", "-1")
   }
 
   // register sessions
@@ -79,8 +88,15 @@ abstract class TpcSuite(
     val allQueries = allQueryIds()
     val results = (0 until iterations).flatMap { iteration =>
       println(s"Running tests (iteration $iteration)...")
-      queryIds.map { queryId =>
-        if (!allQueries.contains(queryId)) {
+      val runQueryIds = queryIds match {
+        case Array("__all__") =>
+          allQueries
+        case _ =>
+          queryIds
+      }
+      val allQueriesSet = allQueries.toSet
+      runQueryIds.map { queryId =>
+        if (!allQueriesSet.contains(queryId)) {
           throw new IllegalArgumentException(s"Query ID doesn't exist: $queryId")
         }
         runTpcQuery(queryId)
@@ -219,7 +235,11 @@ abstract class TpcSuite(
 
   protected def createDataGen(): DataGen
 
-  protected def allQueryIds(): Set[String]
+  protected def allQueryIds(): Array[String]
+
+  protected def queryResource(): String
+
+  protected def typeModifiers(): List[TypeModifier]
 
 }
 
