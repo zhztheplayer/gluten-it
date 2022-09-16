@@ -10,15 +10,17 @@ object Constants {
   val VANILLA_CONF: SparkConf = new SparkConf()
 
   val VELOX_BACKEND_CONF: SparkConf = new SparkConf()
+    .set("spark.gluten.sql.columnar.backend.lib", "velox")
+    .set("spark.gluten.sql.columnar.forceshuffledhashjoin", "true")
     .set("spark.sql.parquet.enableVectorizedReader", "true")
     .set("spark.plugins", "io.glutenproject.GlutenPlugin")
-    .set("spark.gluten.sql.columnar.backend.lib", "velox")
     .set("spark.shuffle.manager", "org.apache.spark.shuffle.sort.ColumnarShuffleManager")
 
   val GAZELLE_CPP_BACKEND_CONF: SparkConf = new SparkConf()
+    .set("spark.gluten.sql.columnar.backend.lib", "gazelle_cpp")
+    .set("spark.gluten.sql.columnar.forceshuffledhashjoin", "true")
     .set("spark.sql.parquet.enableVectorizedReader", "true")
     .set("spark.plugins", "io.glutenproject.GlutenPlugin")
-    .set("spark.gluten.sql.columnar.backend.lib", "gazelle_cpp")
     .set("spark.shuffle.manager", "org.apache.spark.shuffle.sort.ColumnarShuffleManager")
 
   val TYPE_MODIFIER_DATE_AS_DOUBLE: TypeModifier = new TypeModifier(DateType, DoubleType) {
