@@ -9,7 +9,7 @@ object Constants {
 
   val VANILLA_CONF: SparkConf = new SparkConf()
     .set("spark.memory.offHeap.enabled", "true")
-    .set("spark.sql.codegen.wholeStage", "false")
+    .set("spark.sql.codegen.wholeStage", "true")
     .set("spark.sql.sources.useV1SourceList", "")
     .set("spark.storage.blockManagerSlaveTimeoutMs", "3600000")
     .set("spark.executor.heartbeatInterval", "3600000")
