@@ -9,7 +9,6 @@ object Constants {
 
   val VANILLA_CONF: SparkConf = new SparkConf()
     .set("spark.memory.offHeap.enabled", "true")
-    .set("spark.sql.codegen.wholeStage", "true")
     .set("spark.sql.sources.useV1SourceList", "")
     .set("spark.storage.blockManagerSlaveTimeoutMs", "3600000")
     .set("spark.executor.heartbeatInterval", "3600000")
@@ -23,7 +22,6 @@ object Constants {
     .set("spark.plugins", "io.glutenproject.GlutenPlugin")
     .set("spark.gluten.sql.columnar.backend.lib", "velox")
     .set("spark.shuffle.manager", "org.apache.spark.shuffle.sort.ColumnarShuffleManager")
-    .set("spark.sql.codegen.wholeStage", "true")
     .set("spark.sql.sources.useV1SourceList", "")
     .set("spark.storage.blockManagerSlaveTimeoutMs", "3600000")
     .set("spark.executor.heartbeatInterval", "3600000")
@@ -37,7 +35,6 @@ object Constants {
     .set("spark.plugins", "io.glutenproject.GlutenPlugin")
     .set("spark.gluten.sql.columnar.backend.lib", "gazelle_cpp")
     .set("spark.shuffle.manager", "org.apache.spark.shuffle.sort.ColumnarShuffleManager")
-    .set("spark.sql.codegen.wholeStage", "true")
     .set("spark.sql.sources.useV1SourceList", "")
     .set("spark.storage.blockManagerSlaveTimeoutMs", "3600000")
     .set("spark.executor.heartbeatInterval", "3600000")

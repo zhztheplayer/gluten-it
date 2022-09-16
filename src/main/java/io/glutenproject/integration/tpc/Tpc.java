@@ -62,6 +62,9 @@ public class Tpc implements Callable<Integer> {
   @CommandLine.Option(names = {"--disable-bhj"}, description = "Disable Spark SQL broadcast hash join", defaultValue = "false")
   private boolean disableBhj;
 
+  @CommandLine.Option(names = {"--disable-wscg"}, description = "Disable Spark SQL whole stage code generation", defaultValue = "false")
+  private boolean disableWscg;
+
   private SparkConf pickSparkConf(String backendType) {
     SparkConf conf;
     switch (backendType) {
@@ -103,12 +106,14 @@ public class Tpc implements Callable<Integer> {
       case "h":
         suite = new TpchSuite(testConf, baselineConf, scale,
                 fixedWidthAsDouble, queries, level, explain, errorOnMemLeak,
-                enableHsUi, hsUiPort, cpus, offHeapSize, iterations, disableAqe, disableBhj);
+                enableHsUi, hsUiPort, cpus, offHeapSize, iterations, disableAqe, disableBhj,
+            disableWscg);
         break;
       case "ds":
         suite = new TpcdsSuite(testConf, baselineConf, scale,
             fixedWidthAsDouble, queries, level, explain, errorOnMemLeak,
-            enableHsUi, hsUiPort, cpus, offHeapSize, iterations, disableAqe, disableBhj);
+            enableHsUi, hsUiPort, cpus, offHeapSize, iterations, disableAqe, disableBhj,
+            disableWscg);
         break;
       default:
         throw new IllegalArgumentException("TPC benchmark type not found: " + benchmarkType);

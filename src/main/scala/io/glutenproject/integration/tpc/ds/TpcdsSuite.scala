@@ -21,9 +21,10 @@ class TpcdsSuite(
   val offHeapSize: String,
   val iterations: Int,
   val disableAqe: Boolean,
-  val disableBhj: Boolean) extends TpcSuite(testConf, baselineConf, scale, fixedWidthAsDouble,
+  val disableBhj: Boolean,
+  val disableWscg: Boolean) extends TpcSuite(testConf, baselineConf, scale, fixedWidthAsDouble,
   queryIds, logLevel, explain, errorOnMemLeak, enableHsUi, hsUiPort, cpus,
-  offHeapSize, iterations, disableAqe, disableBhj) {
+  offHeapSize, iterations, disableAqe, disableBhj, disableWscg) {
 
   if (fixedWidthAsDouble) {
     throw new IllegalArgumentException("--fixed-width-as-double is not supported in TPC-DS suite")
