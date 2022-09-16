@@ -7,7 +7,7 @@ import org.apache.spark.sql.catalyst.util.sideBySide
 object GlutenTestUtils {
   private val DOUBLE_TOLERANCE = 0.00001D // 0.001%
 
-  class FuzzyDouble(private val value: Double) extends Comparable[Double] {
+  class FuzzyDouble(private val value: Double) extends Comparable[FuzzyDouble] {
     override def equals(anotherDouble: Any): Boolean = anotherDouble match {
       case d: FuzzyDouble =>
         Precision.equalsWithRelativeTolerance(value, d.value, DOUBLE_TOLERANCE)
@@ -16,7 +16,20 @@ object GlutenTestUtils {
     override def toString: String = java.lang.Double.toString(value)
 
     // unsupported
-    override def compareTo(anotherDouble: Double): Int = throw new UnsupportedOperationException
+    override def compareTo(anotherDouble: FuzzyDouble): Int = throw new UnsupportedOperationException
+    override def hashCode(): Int = throw new UnsupportedOperationException
+  }
+
+  class FuzzyFloat(private val value: Float) extends Comparable[FuzzyFloat] {
+    override def equals(anotherFloat: Any): Boolean = anotherFloat match {
+      case d: FuzzyFloat =>
+        Precision.equalsWithRelativeTolerance(value, d.value, DOUBLE_TOLERANCE)
+      case _ => false
+    }
+    override def toString: String = java.lang.Float.toString(value)
+
+    // unsupported
+    override def compareTo(anotherFloat: FuzzyFloat): Int = throw new UnsupportedOperationException
     override def hashCode(): Int = throw new UnsupportedOperationException
   }
 
@@ -36,6 +49,7 @@ object GlutenTestUtils {
         Row.fromSeq(s.toSeq.map {
           case d: java.math.BigDecimal => BigDecimal(d)
           case b: Array[Byte] => b.toSeq
+          case f: Float => new FuzzyFloat(f)
           case db: Double => new FuzzyDouble(db)
           case o => o
         })
