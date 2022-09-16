@@ -37,8 +37,15 @@ abstract class TpcSuite(
   private val runner: TpcRunner = new TpcRunner(queryResource(), dataWritePath())
 
   // define initial configs
+  sessionSwitcher.defaultConf().set("spark.sql.sources.useV1SourceList", "")
+  sessionSwitcher.defaultConf().set("spark.storage.blockManagerSlaveTimeoutMs", "3600000")
+  sessionSwitcher.defaultConf().set("spark.executor.heartbeatInterval", "3600000")
+  sessionSwitcher.defaultConf().set("spark.network.timeout", "3601s")
+  sessionSwitcher.defaultConf().set("spark.sql.broadcastTimeout", "1800")
+  sessionSwitcher.defaultConf().set("spark.network.io.preferDirectBufs", "false")
   sessionSwitcher.defaultConf().set("spark.unsafe.exceptionOnMemoryLeak", s"$errorOnMemLeak")
   sessionSwitcher.defaultConf().set("spark.ui.enabled", "false")
+  sessionSwitcher.defaultConf().set("spark.memory.offHeap.enabled", "true")
   sessionSwitcher.defaultConf().set("spark.memory.offHeap.size", offHeapSize)
 
   if (enableHsUi) {

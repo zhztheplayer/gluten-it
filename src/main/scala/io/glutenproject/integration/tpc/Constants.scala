@@ -8,39 +8,18 @@ import org.apache.spark.sql.types.{DateType, DoubleType, IntegerType, LongType}
 object Constants {
 
   val VANILLA_CONF: SparkConf = new SparkConf()
-    .set("spark.memory.offHeap.enabled", "true")
-    .set("spark.sql.sources.useV1SourceList", "")
-    .set("spark.storage.blockManagerSlaveTimeoutMs", "3600000")
-    .set("spark.executor.heartbeatInterval", "3600000")
-    .set("spark.network.timeout", "3601s")
-    .set("spark.sql.broadcastTimeout", "1800")
-    .set("spark.network.io.preferDirectBufs", "false")
 
   val VELOX_BACKEND_CONF: SparkConf = new SparkConf()
-    .set("spark.memory.offHeap.enabled", "true")
     .set("spark.sql.parquet.enableVectorizedReader", "true")
     .set("spark.plugins", "io.glutenproject.GlutenPlugin")
     .set("spark.gluten.sql.columnar.backend.lib", "velox")
     .set("spark.shuffle.manager", "org.apache.spark.shuffle.sort.ColumnarShuffleManager")
-    .set("spark.sql.sources.useV1SourceList", "")
-    .set("spark.storage.blockManagerSlaveTimeoutMs", "3600000")
-    .set("spark.executor.heartbeatInterval", "3600000")
-    .set("spark.network.timeout", "3601s")
-    .set("spark.sql.broadcastTimeout", "1800")
-    .set("spark.network.io.preferDirectBufs", "false")
 
   val GAZELLE_CPP_BACKEND_CONF: SparkConf = new SparkConf()
-    .set("spark.memory.offHeap.enabled", "true")
     .set("spark.sql.parquet.enableVectorizedReader", "true")
     .set("spark.plugins", "io.glutenproject.GlutenPlugin")
     .set("spark.gluten.sql.columnar.backend.lib", "gazelle_cpp")
     .set("spark.shuffle.manager", "org.apache.spark.shuffle.sort.ColumnarShuffleManager")
-    .set("spark.sql.sources.useV1SourceList", "")
-    .set("spark.storage.blockManagerSlaveTimeoutMs", "3600000")
-    .set("spark.executor.heartbeatInterval", "3600000")
-    .set("spark.network.timeout", "3601s")
-    .set("spark.sql.broadcastTimeout", "1800")
-    .set("spark.network.io.preferDirectBufs", "false")
 
   val TYPE_MODIFIER_DATE_AS_DOUBLE: TypeModifier = new TypeModifier(DateType, DoubleType) {
     override def modValue(from: Any): Any = {
