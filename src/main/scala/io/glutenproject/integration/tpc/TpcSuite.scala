@@ -168,7 +168,10 @@ abstract class TpcSuite(
     true
   }
 
-  private def aggregate(succeed: List[TestResultLine], name: String) = {
+  private def aggregate(succeed: List[TestResultLine], name: String): List[TestResultLine] = {
+    if (succeed.isEmpty) {
+      return Nil
+    }
     List(succeed.reduce((r1, r2) => TestResultLine(name, testPassed = true,
       if (r1.expectedRowCount.nonEmpty && r2.expectedRowCount.nonEmpty)
         Some(r1.expectedRowCount.get + r2.expectedRowCount.get)
