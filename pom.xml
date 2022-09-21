@@ -14,15 +14,44 @@
     <scala.library.version>2.12.10</scala.library.version>
     <spark.version>3.2.2</spark.version>
     <scala.binary.version>2.12</scala.binary.version>
-    <arrow.version>1.0.0-SNAPSHOT</arrow.version>
   </properties>
 
+  <profiles>
+    <profile>
+      <id>gluten-velox</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+        <arrow.version>10.0.0-SNAPSHOT</arrow.version>
+      </properties>
+      <dependencies>
+        <dependency>
+          <groupId>io.glutenproject</groupId>
+          <artifactId>backends-velox</artifactId>
+          <version>1.0.0-snapshot</version>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>gluten-gazellecpp</id>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+      </activation>
+      <properties>
+        <arrow.version>8.0.0-gluten-SNAPSHOT</arrow.version>
+      </properties>
+      <dependencies>
+        <dependency>
+          <groupId>io.glutenproject</groupId>
+          <artifactId>backends-gazelle</artifactId>
+          <version>1.0.0-snapshot</version>
+        </dependency>
+      </dependencies>
+    </profile>
+  </profiles>
+
   <dependencies>
-    <dependency>
-      <groupId>io.glutenproject</groupId>
-      <artifactId>backends-velox</artifactId>
-      <version>1.0.0-snapshot</version>
-    </dependency>
     <dependency>
       <groupId>org.scala-lang</groupId>
       <artifactId>scala-library</artifactId>
