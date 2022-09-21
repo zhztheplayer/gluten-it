@@ -22,9 +22,6 @@
       <activation>
         <activeByDefault>true</activeByDefault>
       </activation>
-      <properties>
-        <arrow.version>10.0.0-SNAPSHOT</arrow.version>
-      </properties>
       <dependencies>
         <dependency>
           <groupId>io.glutenproject</groupId>
@@ -38,9 +35,6 @@
       <activation>
         <activeByDefault>false</activeByDefault>
       </activation>
-      <properties>
-        <arrow.version>8.0.0-gluten-SNAPSHOT</arrow.version>
-      </properties>
       <dependencies>
         <dependency>
           <groupId>io.glutenproject</groupId>
