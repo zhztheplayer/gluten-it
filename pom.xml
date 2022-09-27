@@ -26,7 +26,6 @@
       </activation>
       <properties>
         <spark.version>${spark32.version}</spark.version>
-        <sparkbundle.version>3.2</sparkbundle.version>
       </properties>
       <dependencies>
         <dependency>
@@ -41,7 +40,6 @@
       <id>spark-3.3</id>
       <properties>
         <spark.version>${spark33.version}</spark.version>
-        <sparkbundle.version>3.3</sparkbundle.version>
       </properties>
       <dependencies>
         <dependency>
@@ -60,7 +58,7 @@
       <dependencies>
         <dependency>
           <groupId>io.glutenproject</groupId>
-          <artifactId>backends-velox-spark${sparkbundle.version}_${scala.binary.version}</artifactId>
+          <artifactId>backends-velox</artifactId>
           <version>${gluten.version}</version>
         </dependency>
       </dependencies>
@@ -74,7 +72,7 @@
       <dependencies>
         <dependency>
           <groupId>io.glutenproject</groupId>
-          <artifactId>backends-gazelle-spark${sparkbundle.version}_${scala.binary.version}</artifactId>
+          <artifactId>backends-gazelle</artifactId>
           <version>${gluten.version}</version>
         </dependency>
       </dependencies>
