@@ -1,17 +1,17 @@
 package io.glutenproject.integration.tpc.ds
 
 import java.io.File
-
 import io.glutenproject.integration.tpc.{DataGen, NoopModifier, TypeModifier}
 import io.trino.tpcds._
-
 import org.apache.spark.sql.{Column, Row, SaveMode, SparkSession}
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.types._
+
+import java.nio.file.{Files, Paths, StandardCopyOption}
 import scala.collection.JavaConverters._
 
 class TpcdsDataGen(val spark: SparkSession, scale: Double, partitions: Int, dir: String,
-  typeModifiers: List[TypeModifier] = List())
+  typeModifiers: List[TypeModifier] = List(), val noPart: Boolean, val fileFormat: String)
   extends Serializable with DataGen {
 
   def writeParquetTable(t: Table): Unit = {
@@ -45,7 +45,7 @@ class TpcdsDataGen(val spark: SparkSession, scale: Double, partitions: Int, dir:
       case "web_page" => TpcdsDataGen.webPageSchema
       case "web_site" => TpcdsDataGen.webSiteSchema
     }
-    val partitionBy: List[String] = name match {
+    val partitionBy: List[String] = if (noPart) List[String]() else name match {
       case "catalog_sales" => List("cs_sold_date_sk")
       case "web_sales" => List("ws_sold_date_sk")
       case _ => List[String]()
@@ -56,7 +56,7 @@ class TpcdsDataGen(val spark: SparkSession, scale: Double, partitions: Int, dir:
 
   private def writeParquetTable(tableName: String, t: Table, schema: StructType,
     partitionBy: List[String]): Unit = {
-
+    println(s"Generating table $tableName...")
     val rowModifier = DataGen.getRowModifier(schema, typeModifiers)
     val modifiedSchema = DataGen.modifySchema(schema, rowModifier)
 
@@ -65,7 +65,8 @@ class TpcdsDataGen(val spark: SparkSession, scale: Double, partitions: Int, dir:
     val columns = modifiedSchema.fields.map { f =>
       new Column(f.name).cast(f.dataType).as(f.name)
     }
-
+    // if is dwrf path, save to tmp path and then read from this path
+    val tablePath = if (fileFormat.equals("dwrf")) dir + "-dwrf" + File.separator + tableName else dir + File.separator + tableName
     spark.range(0, partitions, 1L, partitions)
       .mapPartitions { itr =>
         val id = itr.toArray
@@ -89,7 +90,12 @@ class TpcdsDataGen(val spark: SparkSession, scale: Double, partitions: Int, dir:
       .write
       .mode(SaveMode.Overwrite)
       .partitionBy(partitionBy.toArray: _*)
-      .parquet(dir + File.separator + tableName)
+      .parquet(tablePath)
+
+    if (fileFormat.equals("dwrf")) {
+      val tbl = spark.read.format("parquet").load(dir + "-dwrf" + File.separator + tableName)
+      tbl.write.mode(SaveMode.Overwrite).format("dwrf").save(dir + File.separator + tableName)
+    }
   }
 
   override def gen(): Unit = {
