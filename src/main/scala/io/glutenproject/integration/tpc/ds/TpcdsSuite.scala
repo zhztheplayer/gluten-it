@@ -38,10 +38,10 @@ class TpcdsSuite(
 
   override protected def queryResource(): String = {
     if (fixedWidthAsDouble) {
-      "/tpcds-queries"
-    } else {
       // date -> string, decimal -> double
       "/tpcds-queries-nodecimal-nodate"
+    } else {
+      "/tpcds-queries"
     }
   }
 
