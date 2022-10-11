@@ -1,4 +1,4 @@
-# Gluten Itegration Testing (gluten-it)
+# Gluten Integration Testing (gluten-it)
 
 The project makes it easy to test Gluten build locally.
 
