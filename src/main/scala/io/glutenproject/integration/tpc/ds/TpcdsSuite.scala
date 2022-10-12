@@ -1,9 +1,8 @@
 package io.glutenproject.integration.tpc.ds
 
-import io.glutenproject.integration.tpc.{DataGen, TpcSuite, TypeModifier}
+import io.glutenproject.integration.tpc.{Constants, DataGen, TpcSuite, TypeModifier}
 import io.glutenproject.integration.tpc.ds.TpcdsSuite.{ALL_QUERY_IDS, HISTORY_WRITE_PATH, TPCDS_WRITE_PATH}
 import org.apache.log4j.Level
-
 import org.apache.spark.SparkConf
 
 class TpcdsSuite(
@@ -22,29 +21,36 @@ class TpcdsSuite(
   val iterations: Int,
   val disableAqe: Boolean,
   val disableBhj: Boolean,
-  val disableWscg: Boolean) extends TpcSuite(testConf, baselineConf, scale, fixedWidthAsDouble,
+  val disableWscg: Boolean,
+  val partition: Boolean,
+  val fileFormat: String) extends TpcSuite(testConf, baselineConf, scale, fixedWidthAsDouble,
   queryIds, logLevel, explain, errorOnMemLeak, enableHsUi, hsUiPort, cpus,
   offHeapSize, iterations, disableAqe, disableBhj, disableWscg) {
-
-  if (fixedWidthAsDouble) {
-    throw new IllegalArgumentException("--fixed-width-as-double is not supported in TPC-DS suite")
-  }
 
   override protected def dataWritePath(): String = TPCDS_WRITE_PATH
 
   override protected def historyWritePath(): String = HISTORY_WRITE_PATH
 
   override protected def createDataGen(): DataGen = new TpcdsDataGen(sessionSwitcher.spark(),
-    scale, cpus, TPCDS_WRITE_PATH, typeModifiers())
+    scale, cpus, TPCDS_WRITE_PATH, typeModifiers(), partition, fileFormat)
 
   override protected def allQueryIds(): Array[String] = ALL_QUERY_IDS
 
   override protected def queryResource(): String = {
-    "/tpcds-queries"
+    if (fixedWidthAsDouble) {
+      // date -> string, decimal -> double
+      "/tpcds-queries-nodecimal-nodate"
+    } else {
+      "/tpcds-queries"
+    }
   }
 
   override protected def typeModifiers(): List[TypeModifier] = {
-    List()
+    if (fixedWidthAsDouble) {
+      List(Constants.TYPE_MODIFIER_DATE_AS_STRING, Constants.TYPE_MODIFIER_DECIMAL_AS_DOUBLE)
+    } else {
+      List()
+    }
   }
 }
 

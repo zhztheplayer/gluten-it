@@ -17,7 +17,7 @@
 
 package io.glutenproject.integration.tpc
 
-import org.apache.spark.sql.types.{DataType, StructField, StructType}
+import org.apache.spark.sql.types.{DataType, DecimalType, StructField, StructType}
 
 trait DataGen {
   def gen(): Unit
@@ -34,7 +34,6 @@ class NoopModifier(t: DataType) extends TypeModifier(t, t) {
 object DataGen {
   def getRowModifier(schema: StructType, typeModifiers: List[TypeModifier]): Int => TypeModifier = {
     val typeMapping: java.util.Map[DataType, TypeModifier] = new java.util.HashMap()
-
     typeModifiers.foreach { m =>
       if (typeMapping.containsKey(m.from)) {
         throw new IllegalStateException()
@@ -45,6 +44,8 @@ object DataGen {
     schema.fields.foreach { f =>
       if (typeMapping.containsKey(f.dataType)) {
         modifiers.add(typeMapping.get(f.dataType))
+      } else if (f.dataType.isInstanceOf[DecimalType]) {
+        modifiers.add(typeMapping.get(DecimalType.SYSTEM_DEFAULT))
       } else {
         modifiers.add(new NoopModifier(f.dataType))
       }

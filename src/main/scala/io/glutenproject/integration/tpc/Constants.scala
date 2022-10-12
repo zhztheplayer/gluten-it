@@ -1,9 +1,8 @@
 package io.glutenproject.integration.tpc
 
 import java.sql.Date
-
 import org.apache.spark.SparkConf
-import org.apache.spark.sql.types.{DateType, DoubleType, IntegerType, LongType}
+import org.apache.spark.sql.types.{DateType, DecimalType, DoubleType, IntegerType, LongType, StringType}
 
 object Constants {
 
@@ -43,6 +42,22 @@ object Constants {
     override def modValue(from: Any): Any = {
       from match {
         case v: Long => v.asInstanceOf[Double]
+      }
+    }
+  }
+
+  val TYPE_MODIFIER_DATE_AS_STRING: TypeModifier = new TypeModifier(DateType, StringType) {
+    override def modValue(from: Any): Any = {
+      from match {
+        case v: Date => v.toString
+      }
+    }
+  }
+
+  val TYPE_MODIFIER_DECIMAL_AS_DOUBLE: TypeModifier = new TypeModifier(DecimalType.SYSTEM_DEFAULT, DoubleType) {
+    override def modValue(from: Any): Any = {
+      from match {
+        case v: java.math.BigDecimal => v.doubleValue()
       }
     }
   }
