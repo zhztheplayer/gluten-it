@@ -65,8 +65,8 @@ public class Tpc implements Callable<Integer> {
   @CommandLine.Option(names = {"--disable-wscg"}, description = "Disable Spark SQL whole stage code generation", defaultValue = "false")
   private boolean disableWscg;
 
-  @CommandLine.Option(names = {"--no-part"}, description = "Data does not have partition", defaultValue = "true")
-  private boolean noPart;
+  @CommandLine.Option(names = {"--partition"}, description = "Data has partition", defaultValue = "false")
+  private boolean partition;
 
   @CommandLine.Option(names = {"--file-format"}, description = "Option: parquet, dwrf", defaultValue = "parquet")
   private String fileFormat;
@@ -120,7 +120,7 @@ public class Tpc implements Callable<Integer> {
         suite = new TpcdsSuite(testConf, baselineConf, scale,
             fixedWidthAsDouble, queries, level, explain, errorOnMemLeak,
             enableHsUi, hsUiPort, cpus, offHeapSize, iterations, disableAqe, disableBhj,
-            disableWscg, noPart, fileFormat);
+            disableWscg, partition, fileFormat);
         break;
       default:
         throw new IllegalArgumentException("TPC benchmark type not found: " + benchmarkType);
