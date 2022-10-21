@@ -33,7 +33,7 @@ abstract class TpcSuite(
   System.setProperty("spark.testing", "true")
   resetLogLevel()
 
-  protected val sessionSwitcher: GlutenSparkSessionSwitcher = new GlutenSparkSessionSwitcher(cpus)
+  protected val sessionSwitcher: GlutenSparkSessionSwitcher = new GlutenSparkSessionSwitcher(cpus, logLevel.toString)
   private val runner: TpcRunner = new TpcRunner(queryResource(), dataWritePath())
 
   // define initial configs
