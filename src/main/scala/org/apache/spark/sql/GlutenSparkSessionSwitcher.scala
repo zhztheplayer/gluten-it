@@ -24,7 +24,7 @@ import org.apache.spark.sql.catalyst.optimizer.ConvertToLocalRelation
 import org.apache.spark.sql.internal.{SQLConf, StaticSQLConf}
 import org.apache.spark.{DebugFilesystem, SparkConf, SparkContext}
 
-class GlutenSparkSessionSwitcher(val cpus: Int) extends AutoCloseable {
+class GlutenSparkSessionSwitcher(val cpus: Int, val logLevel: String) extends AutoCloseable {
   private val sessionMap: java.util.Map[SessionToken, SparkConf] =
     new java.util.HashMap[SessionToken, SparkConf]
 
@@ -116,6 +116,7 @@ class GlutenSparkSessionSwitcher(val cpus: Int) extends AutoCloseable {
       throw new IllegalStateException()
     }
     _spark = new SparkSession(new SparkContext(s"local[$cpus]", appName, conf))
+    _spark.sparkContext.setLogLevel(logLevel)
   }
 
   private def hasActiveSession(): Boolean = {

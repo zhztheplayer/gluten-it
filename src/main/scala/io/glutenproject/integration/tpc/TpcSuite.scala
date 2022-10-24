@@ -33,7 +33,7 @@ abstract class TpcSuite(
   System.setProperty("spark.testing", "true")
   resetLogLevel()
 
-  protected val sessionSwitcher: GlutenSparkSessionSwitcher = new GlutenSparkSessionSwitcher(cpus)
+  protected val sessionSwitcher: GlutenSparkSessionSwitcher = new GlutenSparkSessionSwitcher(cpus, logLevel.toString)
   private val runner: TpcRunner = new TpcRunner(queryResource(), dataWritePath())
 
   // define initial configs
@@ -227,13 +227,13 @@ abstract class TpcSuite(
       val error = GlutenTestUtils.compareAnswers(resultRows, expectedRows, sort = true)
       if (error.isEmpty) {
         println(s"Successfully ran query $id, result check was passed. " +
-          s"Returned row count: ${resultRows.length}, expected: ${resultRows.length}")
-        return TestResultLine(id, testPassed = true, Some(resultRows.length), Some(resultRows.length),
+          s"Returned row count: ${resultRows.length}, expected: ${expectedRows.length}")
+        return TestResultLine(id, testPassed = true, Some(expectedRows.length), Some(resultRows.length),
           Some(expected.executionTimeMillis), Some(result.executionTimeMillis), None)
       }
       println(s"Error running query $id, result check was not passed. " +
-        s"Returned row count: ${resultRows.length}, expected: ${resultRows.length}, error: ${error.get}")
-      TestResultLine(id, testPassed = false, Some(resultRows.length), Some(resultRows.length),
+        s"Returned row count: ${resultRows.length}, expected: ${expectedRows.length}, error: ${error.get}")
+      TestResultLine(id, testPassed = false, Some(expectedRows.length), Some(resultRows.length),
         Some(expected.executionTimeMillis), Some(result.executionTimeMillis), error)
     } catch {
       case e: Exception =>
