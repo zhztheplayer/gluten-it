@@ -6,6 +6,7 @@ import org.apache.log4j.Level;
 import org.apache.spark.SparkConf;
 import picocli.CommandLine;
 
+import java.util.Arrays;
 import java.util.concurrent.Callable;
 
 
@@ -71,6 +72,12 @@ public class Tpc implements Callable<Integer> {
   @CommandLine.Option(names = {"--file-format"}, description = "Option: parquet, dwrf", defaultValue = "parquet")
   private String fileFormat;
 
+  @CommandLine.Option(names = {"--conf"}, description = "Test line Spark conf, separate by ',', if more than one config, should wrap with \"\"", defaultValue = "")
+  private String sparkConf;
+
+  @CommandLine.Option(names = {"--use-exists-data"}, description = "Use the generated data in /tmp/tpcds-generated or other", defaultValue = "false")
+  private boolean useExistsData;
+
   private SparkConf pickSparkConf(String backendType) {
     SparkConf conf;
     switch (backendType) {
@@ -90,10 +97,24 @@ public class Tpc implements Callable<Integer> {
     return conf;
   }
 
+  private void setUserConf(SparkConf conf) {
+    if (sparkConf.isEmpty()) {
+      return;
+    }
+    Arrays.stream(sparkConf.split(",")).forEach(c -> {
+      int idx = c.indexOf("=");
+      if (idx == 0) {
+        throw new IllegalArgumentException("Conf format should be a=b");
+      }
+      conf.set(c.substring(0, idx), c.substring(idx + 1));
+    });
+  }
+
   @Override
   public Integer call() throws Exception {
     final SparkConf baselineConf = pickSparkConf(baselineBackendType);
     final SparkConf testConf = pickSparkConf(backendType);
+    setUserConf(testConf);
     final Level level;
     switch (logLevel) {
       case 0:
@@ -114,13 +135,13 @@ public class Tpc implements Callable<Integer> {
         suite = new TpchSuite(testConf, baselineConf, scale,
                 fixedWidthAsDouble, queries, level, explain, errorOnMemLeak,
                 enableHsUi, hsUiPort, cpus, offHeapSize, iterations, disableAqe, disableBhj,
-            disableWscg);
+            disableWscg, useExistsData);
         break;
       case "ds":
         suite = new TpcdsSuite(testConf, baselineConf, scale,
             fixedWidthAsDouble, queries, level, explain, errorOnMemLeak,
             enableHsUi, hsUiPort, cpus, offHeapSize, iterations, disableAqe, disableBhj,
-            disableWscg, partition, fileFormat);
+            disableWscg, partition, fileFormat, useExistsData);
         break;
       default:
         throw new IllegalArgumentException("TPC benchmark type not found: " + benchmarkType);

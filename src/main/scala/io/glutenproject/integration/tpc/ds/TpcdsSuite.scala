@@ -23,9 +23,10 @@ class TpcdsSuite(
   val disableBhj: Boolean,
   val disableWscg: Boolean,
   val partition: Boolean,
-  val fileFormat: String) extends TpcSuite(testConf, baselineConf, scale, fixedWidthAsDouble,
+  val fileFormat: String,
+  val useExistsData: Boolean) extends TpcSuite(testConf, baselineConf, scale, fixedWidthAsDouble,
   queryIds, logLevel, explain, errorOnMemLeak, enableHsUi, hsUiPort, cpus,
-  offHeapSize, iterations, disableAqe, disableBhj, disableWscg) {
+  offHeapSize, iterations, disableAqe, disableBhj, disableWscg, useExistsData) {
 
   override protected def dataWritePath(): String = TPCDS_WRITE_PATH
 
@@ -52,6 +53,8 @@ class TpcdsSuite(
       List()
     }
   }
+
+  override protected def desc(): String = "TPC-DS"
 }
 
 object TpcdsSuite {
