@@ -107,6 +107,7 @@ public class Tpc implements Callable<Integer> {
     final SparkConf testConf = pickSparkConf(backendType);
     if (sparkConf != null) {
       sparkConf.forEach(testConf::set);
+      sparkConf.forEach(baselineConf::set);
     }
     final Level level;
     switch (logLevel) {
