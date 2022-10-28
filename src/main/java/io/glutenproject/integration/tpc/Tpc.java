@@ -7,6 +7,7 @@ import org.apache.spark.SparkConf;
 import picocli.CommandLine;
 
 import java.util.Arrays;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 
@@ -72,11 +73,14 @@ public class Tpc implements Callable<Integer> {
   @CommandLine.Option(names = {"--file-format"}, description = "Option: parquet, dwrf", defaultValue = "parquet")
   private String fileFormat;
 
-  @CommandLine.Option(names = {"--conf"}, description = "Test line Spark conf, separate by ';', if more than one config, should wrap with \"\"", defaultValue = "")
-  private String sparkConf;
+  @CommandLine.Option(names = {"--conf"}, description = "Test line Spark conf, --conf=k1=v1 --conf=k2=v2")
+  private Map<String, String> sparkConf;
 
   @CommandLine.Option(names = {"--use-exists-data"}, description = "Use the generated data in /tmp/tpcds-generated or other", defaultValue = "false")
   private boolean useExistsData;
+
+  public Tpc() {
+  }
 
   private SparkConf pickSparkConf(String backendType) {
     SparkConf conf;
@@ -97,24 +101,13 @@ public class Tpc implements Callable<Integer> {
     return conf;
   }
 
-  private void setUserConf(SparkConf conf) {
-    if (sparkConf.isEmpty()) {
-      return;
-    }
-    Arrays.stream(sparkConf.split(";")).forEach(c -> {
-      int idx = c.indexOf("=");
-      if (idx == 0) {
-        throw new IllegalArgumentException("Conf format should be a=b");
-      }
-      conf.set(c.substring(0, idx), c.substring(idx + 1));
-    });
-  }
-
   @Override
   public Integer call() throws Exception {
     final SparkConf baselineConf = pickSparkConf(baselineBackendType);
     final SparkConf testConf = pickSparkConf(backendType);
-    setUserConf(testConf);
+    if (sparkConf != null) {
+      sparkConf.forEach(testConf::set);
+    }
     final Level level;
     switch (logLevel) {
       case 0:
