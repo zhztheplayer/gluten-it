@@ -14,8 +14,6 @@
     <scala.library.version>2.12.10</scala.library.version>
     <spark32.version>3.2.2</spark32.version>
     <spark33.version>3.3.0</spark33.version>
-    <gluten.spark32.classifier>3.2</gluten.spark32.classifier>
-    <gluten.spark33.classifier>3.3</gluten.spark33.classifier>
     <scala.binary.version>2.12</scala.binary.version>
     <gluten.version>1.0.0-SNAPSHOT</gluten.version>
   </properties>
@@ -28,14 +26,12 @@
       </activation>
       <properties>
         <spark.version>${spark32.version}</spark.version>
-        <gluten.spark.classifier>${gluten.spark32.classifier}</gluten.spark.classifier>
       </properties>
       <dependencies>
         <dependency>
           <groupId>io.glutenproject</groupId>
           <artifactId>spark-sql-columnar-shims-spark32</artifactId>
           <version>${gluten.version}</version>
-          <classifier>${gluten.spark.classifier}</classifier>
           <scope>compile</scope>
         </dependency>
         <dependency>
@@ -61,14 +57,12 @@
       <id>spark-3.3</id>
       <properties>
         <spark.version>${spark33.version}</spark.version>
-        <gluten.spark.classifier>${gluten.spark33.classifier}</gluten.spark.classifier>
       </properties>
       <dependencies>
         <dependency>
           <groupId>io.glutenproject</groupId>
           <artifactId>spark-sql-columnar-shims-spark33</artifactId>
           <version>${gluten.version}</version>
-          <classifier>${gluten.spark.classifier}</classifier>
           <scope>compile</scope>
         </dependency>
         <dependency>
@@ -100,7 +94,6 @@
           <groupId>io.glutenproject</groupId>
           <artifactId>backends-velox</artifactId>
           <version>${gluten.version}</version>
-          <classifier>${gluten.spark.classifier}</classifier>
         </dependency>
       </dependencies>
     </profile>
@@ -115,7 +108,6 @@
           <groupId>io.glutenproject</groupId>
           <artifactId>backends-gazelle</artifactId>
           <version>${gluten.version}</version>
-          <classifier>${gluten.spark.classifier}</classifier>
         </dependency>
       </dependencies>
     </profile>
