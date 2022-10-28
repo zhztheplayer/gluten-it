@@ -72,7 +72,7 @@ public class Tpc implements Callable<Integer> {
   @CommandLine.Option(names = {"--file-format"}, description = "Option: parquet, dwrf", defaultValue = "parquet")
   private String fileFormat;
 
-  @CommandLine.Option(names = {"--conf"}, description = "Test line Spark conf, separate by ',', if more than one config, should wrap with \"\"", defaultValue = "")
+  @CommandLine.Option(names = {"--conf"}, description = "Test line Spark conf, separate by ';', if more than one config, should wrap with \"\"", defaultValue = "")
   private String sparkConf;
 
   @CommandLine.Option(names = {"--use-exists-data"}, description = "Use the generated data in /tmp/tpcds-generated or other", defaultValue = "false")
@@ -101,7 +101,7 @@ public class Tpc implements Callable<Integer> {
     if (sparkConf.isEmpty()) {
       return;
     }
-    Arrays.stream(sparkConf.split(",")).forEach(c -> {
+    Arrays.stream(sparkConf.split(";")).forEach(c -> {
       int idx = c.indexOf("=");
       if (idx == 0) {
         throw new IllegalArgumentException("Conf format should be a=b");
