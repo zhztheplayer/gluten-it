@@ -76,7 +76,7 @@ public class Tpc implements Callable<Integer> {
   @CommandLine.Option(names = {"--conf"}, description = "Test line Spark conf, --conf=k1=v1 --conf=k2=v2")
   private Map<String, String> sparkConf;
 
-  @CommandLine.Option(names = {"--use-exists-data"}, description = "Use the generated data in /tmp/tpcds-generated or other", defaultValue = "false")
+  @CommandLine.Option(names = {"--use-exists-data"}, description = "Use the generated data in /tmp/tpcds-generated or other, when it is true, then value of --scale will be ignored", defaultValue = "false")
   private boolean useExistsData;
 
   public Tpc() {
