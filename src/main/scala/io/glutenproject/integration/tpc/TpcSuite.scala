@@ -29,7 +29,7 @@ abstract class TpcSuite(
   private val disableAqe: Boolean,
   private val disableBhj: Boolean,
   private val disableWscg: Boolean,
-  private val useExistsData: Boolean) {
+  private val useExistingData: Boolean) {
 
   System.setProperty("spark.testing", "true")
   resetLogLevel()
@@ -92,7 +92,7 @@ abstract class TpcSuite(
     // use vanilla spark to generate data
     resetLogLevel() // to prevent log level from being set by unknown external codes
     sessionSwitcher.useSession("baseline", "Data Gen")
-    if (useExistsData) {
+    if (useExistingData) {
       println("Use exists data in " + dataWritePath())
     } else {
       val dataGen = createDataGen()

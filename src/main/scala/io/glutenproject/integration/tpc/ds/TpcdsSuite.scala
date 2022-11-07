@@ -24,9 +24,9 @@ class TpcdsSuite(
   val disableWscg: Boolean,
   val partition: Boolean,
   val fileFormat: String,
-  val useExistsData: Boolean) extends TpcSuite(testConf, baselineConf, scale, fixedWidthAsDouble,
+  val useExistingData: Boolean) extends TpcSuite(testConf, baselineConf, scale, fixedWidthAsDouble,
   queryIds, logLevel, explain, errorOnMemLeak, enableHsUi, hsUiPort, cpus,
-  offHeapSize, iterations, disableAqe, disableBhj, disableWscg, useExistsData) {
+  offHeapSize, iterations, disableAqe, disableBhj, disableWscg, useExistingData) {
 
   override protected def dataWritePath(): String = TPCDS_WRITE_PATH
 

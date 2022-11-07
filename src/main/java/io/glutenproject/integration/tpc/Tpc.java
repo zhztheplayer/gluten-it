@@ -76,8 +76,8 @@ public class Tpc implements Callable<Integer> {
   @CommandLine.Option(names = {"--conf"}, description = "Test line Spark conf, --conf=k1=v1 --conf=k2=v2")
   private Map<String, String> sparkConf;
 
-  @CommandLine.Option(names = {"--use-exists-data"}, description = "Use the generated data in /tmp/tpcds-generated or other, when it is true, then value of --scale will be ignored", defaultValue = "false")
-  private boolean useExistsData;
+  @CommandLine.Option(names = {"--use-existing-data"}, description = "Use the generated data in /tmp/tpcds-generated or other, when it is true, then value of --scale will be ignored", defaultValue = "false")
+  private boolean useExistingData;
 
   public Tpc() {
   }
@@ -129,13 +129,13 @@ public class Tpc implements Callable<Integer> {
         suite = new TpchSuite(testConf, baselineConf, scale,
                 fixedWidthAsDouble, queries, level, explain, errorOnMemLeak,
                 enableHsUi, hsUiPort, cpus, offHeapSize, iterations, disableAqe, disableBhj,
-            disableWscg, useExistsData);
+            disableWscg, useExistingData);
         break;
       case "ds":
         suite = new TpcdsSuite(testConf, baselineConf, scale,
             fixedWidthAsDouble, queries, level, explain, errorOnMemLeak,
             enableHsUi, hsUiPort, cpus, offHeapSize, iterations, disableAqe, disableBhj,
-            disableWscg, partition, fileFormat, useExistsData);
+            disableWscg, partition, fileFormat, useExistingData);
         break;
       default:
         throw new IllegalArgumentException("TPC benchmark type not found: " + benchmarkType);
