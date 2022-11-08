@@ -6,6 +6,8 @@ import org.apache.log4j.Level;
 import org.apache.spark.SparkConf;
 import picocli.CommandLine;
 
+import java.util.Arrays;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 
@@ -71,6 +73,15 @@ public class Tpc implements Callable<Integer> {
   @CommandLine.Option(names = {"--file-format"}, description = "Option: parquet, dwrf", defaultValue = "parquet")
   private String fileFormat;
 
+  @CommandLine.Option(names = {"--conf"}, description = "Test line Spark conf, --conf=k1=v1 --conf=k2=v2")
+  private Map<String, String> sparkConf;
+
+  @CommandLine.Option(names = {"--use-existing-data"}, description = "Use the generated data in /tmp/tpcds-generated or other, when it is true, then value of --scale will be ignored", defaultValue = "false")
+  private boolean useExistingData;
+
+  public Tpc() {
+  }
+
   private SparkConf pickSparkConf(String backendType) {
     SparkConf conf;
     switch (backendType) {
@@ -93,6 +104,10 @@ public class Tpc implements Callable<Integer> {
   public Integer call() throws Exception {
     final SparkConf baselineConf = pickSparkConf(baselineBackendType);
     final SparkConf testConf = pickSparkConf(backendType);
+    if (sparkConf != null) {
+      sparkConf.forEach(testConf::set);
+      sparkConf.forEach(baselineConf::set);
+    }
     final Level level;
     switch (logLevel) {
       case 0:
@@ -113,13 +128,13 @@ public class Tpc implements Callable<Integer> {
         suite = new TpchSuite(testConf, baselineConf, scale,
                 fixedWidthAsDouble, queries, level, explain, errorOnMemLeak,
                 enableHsUi, hsUiPort, cpus, offHeapSize, iterations, disableAqe, disableBhj,
-            disableWscg);
+            disableWscg, useExistingData);
         break;
       case "ds":
         suite = new TpcdsSuite(testConf, baselineConf, scale,
             fixedWidthAsDouble, queries, level, explain, errorOnMemLeak,
             enableHsUi, hsUiPort, cpus, offHeapSize, iterations, disableAqe, disableBhj,
-            disableWscg, partition, fileFormat);
+            disableWscg, partition, fileFormat, useExistingData);
         break;
       default:
         throw new IllegalArgumentException("TPC benchmark type not found: " + benchmarkType);

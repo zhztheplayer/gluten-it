@@ -28,7 +28,8 @@ abstract class TpcSuite(
   private val iterations: Int,
   private val disableAqe: Boolean,
   private val disableBhj: Boolean,
-  private val disableWscg: Boolean) {
+  private val disableWscg: Boolean,
+  private val useExistingData: Boolean) {
 
   System.setProperty("spark.testing", "true")
   resetLogLevel()
@@ -49,7 +50,7 @@ abstract class TpcSuite(
   sessionSwitcher.defaultConf().set("spark.memory.offHeap.size", offHeapSize)
 
   if (enableHsUi) {
-    if (!new File(historyWritePath()).mkdirs()) {
+    if (!new File(historyWritePath()).exists() && !new File(historyWritePath()).mkdirs()) {
       throw new RuntimeException("Unable to create history directory: " +
         historyWritePath())
     }
@@ -91,8 +92,12 @@ abstract class TpcSuite(
     // use vanilla spark to generate data
     resetLogLevel() // to prevent log level from being set by unknown external codes
     sessionSwitcher.useSession("baseline", "Data Gen")
-    val dataGen = createDataGen()
-    dataGen.gen()
+    if (useExistingData) {
+      println("Use existing data in " + dataWritePath())
+    } else {
+      val dataGen = createDataGen()
+      dataGen.gen()
+    }
 
     // run tests
     resetLogLevel() // to prevent log level from being set by unknown external codes
@@ -212,13 +217,13 @@ abstract class TpcSuite(
   private def runTpcQuery(id: String): TestResultLine = {
     println(s"Running query: $id...")
     try {
-      val baseLineDesc = "Vanilla Spark TPC-H %s".format(id)
+      val baseLineDesc = "Vanilla Spark %s %s".format(desc(), id)
       sessionSwitcher.useSession("baseline", baseLineDesc)
       runner.createTables(sessionSwitcher.spark())
       val expected = runner.runTpcQuery(sessionSwitcher.spark(), id, explain = explain,
         baseLineDesc)
       val expectedRows = expected.rows
-      val testDesc = "Gluten Spark TPC-H %s".format(id)
+      val testDesc = "Gluten Spark %s %s".format(desc(), id)
       sessionSwitcher.useSession("test", testDesc)
       runner.createTables(sessionSwitcher.spark())
       val result = runner.runTpcQuery(sessionSwitcher.spark(), id, explain = explain,
@@ -255,6 +260,8 @@ abstract class TpcSuite(
   protected def queryResource(): String
 
   protected def typeModifiers(): List[TypeModifier]
+
+  protected def desc(): String
 
 }
 
