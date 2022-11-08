@@ -93,7 +93,7 @@ abstract class TpcSuite(
     resetLogLevel() // to prevent log level from being set by unknown external codes
     sessionSwitcher.useSession("baseline", "Data Gen")
     if (useExistingData) {
-      println("Use exists data in " + dataWritePath())
+      println("Use existing data in " + dataWritePath())
     } else {
       val dataGen = createDataGen()
       dataGen.gen()
